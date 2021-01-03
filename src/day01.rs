@@ -1,20 +1,10 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::Path;
-
-fn get_lines(file: &str) -> impl Iterator<Item=u16> {
-    let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let file_name = String::from(manifest_dir) + file;
-    let path = Path::new(&file_name);
-    let file = File::open(path).expect("file not found");
-    let reader = BufReader::new(file);
-    reader.lines()
-        .map(|result| result.unwrap().parse::<u16>().unwrap())
-        .filter(|candidate| *candidate <= 2020u16) // filter out anything that is obviously too big
-}
+use advent_of_code::lib;
 
 fn get_input() -> Vec<u16> {
-    let mut items: Vec<u16> = get_lines("/input/day-1-input.txt").collect();
+    let mut items: Vec<u16> = lib::get_lines("/input/day-1-input.txt")
+        .map(|line| line.parse::<u16>().unwrap())
+        .filter(|candidate| *candidate <= 2020u16) // filter out anything that is obviously too big
+        .collect();
     items.sort(); // sort to reduce the search space for the complement
     items
 }
