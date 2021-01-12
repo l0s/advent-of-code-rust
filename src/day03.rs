@@ -1,7 +1,7 @@
-use advent_of_code::lib;
+use advent_of_code::get_lines;
 
 fn get_input() -> impl Iterator<Item=String> {
-    lib::get_lines("/input/day-3-input.txt")
+    get_lines("/input/day-3-input.txt")
 }
 
 /// A map of the trees in the area

@@ -1,9 +1,9 @@
 use unicode_segmentation::UnicodeSegmentation;
 
-use advent_of_code::lib;
+use advent_of_code::get_lines;
 
 fn get_input() -> impl Iterator<Item=String> {
-    lib::get_lines("/input/day-2-input.txt")
+    get_lines("/input/day-2-input.txt")
 }
 
 trait Entry {

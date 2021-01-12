@@ -1,7 +1,7 @@
-use advent_of_code::lib;
+use advent_of_code::get_lines;
 
 fn get_input() -> Vec<u16> {
-    let mut items: Vec<u16> = lib::get_lines("/input/day-1-input.txt")
+    let mut items: Vec<u16> = get_lines("/input/day-1-input.txt")
         .map(|line| line.parse::<u16>().unwrap())
         .filter(|candidate| *candidate <= 2020u16) // filter out anything that is obviously too big
         .collect();
