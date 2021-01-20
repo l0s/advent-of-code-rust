@@ -54,12 +54,12 @@ mod tests {
         let count_valid = get_blocks()
             .filter(|block| -> bool {
                 let birth_year: Option<u16> = block.get("byr")
-                    .map(|string| string.parse::<u16>().unwrap())// FIXME how can I avoid unwrapping?
+                    .and_then(|string| string.parse::<u16>().ok())
                     .filter(|year| *year >= 1920 && *year <= 2002);
                 birth_year.is_some()
             }).filter(|block| -> bool {
                 let issue_year: Option<u16> = block.get("iyr")
-                    .map(|year| year.parse::<u16>().unwrap()) // FIXME how can I avoid unwrapping?
+                    .and_then(|year| year.parse::<u16>().ok())
                     .filter(|year| *year >= 2010 && *year <= 2020);
                 issue_year.is_some()
             }).filter(|block| -> bool {
