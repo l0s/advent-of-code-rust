@@ -5,7 +5,7 @@ fn get_input() -> impl Iterator<Item = String> {
 }
 
 /// A map of the trees in the area
-fn get_map() -> Vec<Vec<bool>> {
+pub fn get_map() -> Vec<Vec<bool>> {
     get_input()
         .map(|line| {
             line.chars()
@@ -21,7 +21,7 @@ fn get_map() -> Vec<Vec<bool>> {
 /// Parameters
 /// * `forest` - a map of the area with `true` squares denoting the presence of a tree
 /// * `slope` - the angle at which the toboggan travels
-fn count_trees(forest: &Vec<Vec<bool>>, slope: &Slope) -> u8 {
+pub fn count_trees(forest: &Vec<Vec<bool>>, slope: &Slope) -> u8 {
     let mut num_trees: u8 = 0;
     let mut row_index: usize = 0;
     let mut column_index: usize = 0;
@@ -43,14 +43,14 @@ fn count_trees(forest: &Vec<Vec<bool>>, slope: &Slope) -> u8 {
     }
 }
 
-struct Slope {
+pub struct Slope {
     right: usize,
     down: usize,
 }
 
 impl Slope {
     /// Returns the new coordinates of the toboggan on the map
-    fn move_toboggan(
+    pub fn move_toboggan(
         &self,
         current_row: usize,
         current_column: usize,
@@ -65,6 +65,7 @@ impl Slope {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::day03::{count_trees, get_map, Slope};
 

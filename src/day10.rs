@@ -11,7 +11,7 @@ use crate::get_lines;
 /// *Panics* if any line in the input contains a malformed joltage
 ///
 /// "Always prepared, you make a list of all of the joltage adapters in your bag."
-fn get_joltage_adapters() -> Vec<u8> {
+pub fn get_joltage_adapters() -> Vec<u8> {
     let mut adapters = get_lines("/input/day-10-input.txt")
         .map(|line| line.parse())
         .map(|result| result.unwrap()) // panic on invalid joltage
@@ -29,7 +29,7 @@ fn get_joltage_adapters() -> Vec<u8> {
 /// * `to` - the joltage of the device that needs to be charged
 /// * `cache` - a history of precomputed arrangement counts. This will be updated prior to the
 ///             method returning.
-fn count_adapter_arrangements(
+pub fn count_adapter_arrangements(
     adapters: &[u8],
     from: u8,
     to: u8,
@@ -75,6 +75,7 @@ fn count_adapter_arrangements(
     retval
 }
 
+#[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 

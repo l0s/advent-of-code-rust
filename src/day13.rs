@@ -14,7 +14,7 @@ use crate::day13::ParseError::{
 /// A shuttle bus that departs from the sea port, travels to the airport, then several other
 /// destinations, then returns to the sea port
 #[derive(Debug, Copy, Clone)]
-struct Bus {
+pub struct Bus {
     /// The time it takes the bus to complete a circuit in minutes, which also uniquely identifies
     /// the bus
     id: u16,
@@ -59,7 +59,7 @@ impl PartialEq for Bus {
 
 /// A bus that **a specific passenger** is considering boarding from the sea port
 #[derive(Debug, Copy, Clone)]
-struct BusCandidate {
+pub struct BusCandidate {
     /// The bus under consideration
     bus: Bus,
 
@@ -111,7 +111,7 @@ impl Ord for BusCandidate {
 
 /// An error that could arise from parsing the problem input
 #[derive(Debug, Clone)]
-enum ParseError {
+pub enum ParseError {
     InvalidBusId(ParseIntError),
     EarliestDepartureNotSpecified,
     InvalidDepartureTime(ParseIntError),
@@ -159,7 +159,7 @@ fn parse_buses(earliest_departure: u32, string: String) -> Vec<Result<BusCandida
 /// Returns:
 /// - `Ok` - All of the bus candidates given the passenger's earliest departure time
 /// - `Err(ParseError)` - The first parsing error encountered.
-fn parse_input() -> Result<Vec<BusCandidate>, ParseError> {
+pub fn parse_input() -> Result<Vec<BusCandidate>, ParseError> {
     let mut lines = get_lines("/input/day-13-input.txt");
     let earliest_departure = lines.next();
     if earliest_departure.is_none() {
@@ -201,7 +201,7 @@ fn parse_input() -> Result<Vec<BusCandidate>, ParseError> {
 ///
 /// Returns: The smallest number _x_ such that `mod_space` evenly divides
 ///          `( partial_product * x ) - 1`.
-fn find_inverse(partial_product: u64, mod_space: u16) -> u64 {
+pub fn find_inverse(partial_product: u64, mod_space: u16) -> u64 {
     let mod_space = mod_space as u64;
     let mut multiplier = 1u64;
     loop {
@@ -212,6 +212,7 @@ fn find_inverse(partial_product: u64, mod_space: u16) -> u64 {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::day13::{find_inverse, parse_input, Bus};
 

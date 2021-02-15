@@ -1,6 +1,6 @@
 use crate::get_block_strings;
 
-fn get_input() -> impl Iterator<Item = Vec<String>> {
+pub fn get_input() -> impl Iterator<Item = Vec<String>> {
     get_block_strings("/input/day-6-input.txt").map(|string| {
         string
             .split_whitespace()
@@ -9,6 +9,7 @@ fn get_input() -> impl Iterator<Item = Vec<String>> {
     })
 }
 
+#[cfg(test)]
 mod tests {
     use std::collections::HashSet;
 

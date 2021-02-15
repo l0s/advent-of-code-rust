@@ -8,12 +8,13 @@ use crate::get_lines;
 ///
 /// The data appears to be encrypted with the eXchange-Masking Addition System (XMAS) which,
 /// conveniently for you, is an old cypher with an important weakness."
-fn get_data() -> impl Iterator<Item = u64> {
+pub fn get_data() -> impl Iterator<Item = u64> {
     get_lines("/input/day-9-input.txt")
         .map(|line| line.parse())
         .map(|result| result.unwrap()) // panic on invalid XMAS code
 }
 
+#[cfg(test)]
 mod tests {
     use std::collections::LinkedList;
 

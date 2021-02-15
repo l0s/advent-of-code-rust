@@ -4,7 +4,7 @@ use regex::Regex;
 
 use crate::get_lines;
 
-fn get_input() -> HashMap<String, Rule> {
+pub fn get_input() -> HashMap<String, Rule> {
     get_lines("/input/day-7-input.txt")
         .map(|sentence| Rule::from_sentence(sentence))
         .flatten()
@@ -12,13 +12,13 @@ fn get_input() -> HashMap<String, Rule> {
         .collect()
 }
 
-struct Rule {
+pub struct Rule {
     container_colour: String,
     contained_counts: HashMap<String, u32>,
 }
 
-impl Rule {
-    fn from_sentence(sentence: String) -> Option<Rule> {
+impl Rule { // TODO impl FromStr
+    pub fn from_sentence(sentence: String) -> Option<Rule> {
         lazy_static! {
             static ref RULE_COMPONENT_SEPARATOR: Regex = Regex::new(" bags contain ").unwrap();
             static ref CONTAINED_PHRASE_SEPARATOR: Regex = Regex::new(", ").unwrap();
@@ -69,7 +69,7 @@ impl Rule {
         })
     }
 
-    fn can_contain(&self, colour: &str, rule_map: &HashMap<String, Rule>) -> bool {
+    pub fn can_contain(&self, colour: &str, rule_map: &HashMap<String, Rule>) -> bool {
         if (&self).contained_counts.contains_key(colour) {
             return true;
         }
@@ -85,7 +85,7 @@ impl Rule {
             })
     }
 
-    fn count_contained(&self, rule_map: &HashMap<String, Rule>) -> u32 {
+    pub fn count_contained(&self, rule_map: &HashMap<String, Rule>) -> u32 {
         let sum = &self
             .contained_counts
             .iter()
@@ -104,6 +104,7 @@ impl Rule {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::day07::get_input;
 

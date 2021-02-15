@@ -6,7 +6,7 @@ fn get_input() -> impl Iterator<Item = String> {
     get_block_strings("/input/day-4-input.txt")
 }
 
-fn get_blocks() -> impl Iterator<Item = HashMap<String, String>> {
+pub fn get_blocks() -> impl Iterator<Item = HashMap<String, String>> {
     get_input().map(|block| -> HashMap<String, String> {
         block
             .split_whitespace()
@@ -22,6 +22,7 @@ fn get_blocks() -> impl Iterator<Item = HashMap<String, String>> {
     })
 }
 
+#[cfg(test)]
 mod tests {
     use std::collections::HashSet;
 

@@ -11,7 +11,7 @@ use crate::day12::ParseError::{
 };
 
 #[derive(Debug)]
-enum ParseError {
+pub enum ParseError {
     InvalidAction(String),
     InstructionTooShort(String),
     InvalidValue(ParseIntError),
@@ -20,7 +20,7 @@ enum ParseError {
 
 /// An action that the ferry's navigation computer can produce.
 #[derive(Debug)]
-enum Action {
+pub enum Action {
     North,
     South,
     East,
@@ -52,7 +52,7 @@ impl FromStr for Action {
 ///
 /// Each instruction consists of an Action and an integer value indicating the magnitude of that
 /// action.
-struct NavigationInstruction {
+pub struct NavigationInstruction {
     action: Action,
     value: i16,
 }
@@ -87,7 +87,7 @@ impl FromStr for NavigationInstruction {
     }
 }
 
-struct Point {
+pub struct Point {
     /// longitudinal position,
     /// positive numbers are to the East and negative numbers are to the West
     x: i16,
@@ -98,7 +98,7 @@ struct Point {
 
 impl Point {
     /// The sum of the absolute longitudinal and latitudinal distances from the origin
-    fn get_manhattan_distance(&self) -> u16 {
+    pub fn get_manhattan_distance(&self) -> u16 {
         self.x.abs() as u16 + self.y.abs() as u16
     }
 }
@@ -118,7 +118,7 @@ impl NavigationInstruction {
     /// - `Ok` - the ferry's new bearing and new position
     /// - `Err` - if the instruction is to move "forward" but the provided `bearing` is not
     ///           supported
-    fn move_ship(&self, bearing: u16, position: Point) -> Result<(u16, Point), String> {
+    pub fn move_ship(&self, bearing: u16, position: Point) -> Result<(u16, Point), String> {
         match self.action {
             North => Ok((
                 bearing,
@@ -199,7 +199,7 @@ impl NavigationInstruction {
     /// - `ship` - the current position of the ferry
     ///
     /// Returns - The new positions of the waypoint and the ferry
-    fn move_ship_using_waypoint(&self, waypoint: Point, ship: Point) -> (Point, Point) {
+    pub fn move_ship_using_waypoint(&self, waypoint: Point, ship: Point) -> (Point, Point) {
         match self.action {
             North => (
                 Point {
@@ -299,13 +299,13 @@ impl NavigationInstruction {
     }
 }
 
-fn get_instructions() -> impl Iterator<Item = Result<NavigationInstruction, String>> {
+pub fn get_instructions() -> impl Iterator<Item = Result<NavigationInstruction, String>> {
     get_lines("/input/day-12-input.txt")
         .map(|line| line.parse::<NavigationInstruction>())
         .map(|parse_result| parse_result.map_err(|parse_error| describe_error(parse_error)))
 }
 
-fn describe_error(error: ParseError) -> String {
+pub fn describe_error(error: ParseError) -> String {
     match error {
         ParseError::InvalidAction(action) => format!("Invalid action: {}", action),
         ParseError::InstructionTooShort(instruction) => {
@@ -318,6 +318,7 @@ fn describe_error(error: ParseError) -> String {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::day12::{get_instructions, Point};
 

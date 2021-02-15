@@ -4,7 +4,7 @@ fn get_input() -> impl Iterator<Item = String> {
     get_lines("/input/day-5-input.txt")
 }
 
-fn get_sorted_seat_ids() -> Vec<u16> {
+pub fn get_sorted_seat_ids() -> Vec<u16> {
     let mut result = get_input()
         .map(|id| -> u16 {
             let mut chars = id.chars();
@@ -53,6 +53,7 @@ fn get_sorted_seat_ids() -> Vec<u16> {
     result
 }
 
+#[cfg(test)]
 mod tests {
     use crate::day05::get_sorted_seat_ids;
 

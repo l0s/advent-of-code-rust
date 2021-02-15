@@ -1,6 +1,6 @@
 use crate::get_lines;
 
-fn get_input() -> Vec<u16> {
+pub fn get_input() -> Vec<u16> {
     let mut items: Vec<u16> = get_lines("/input/day-1-input.txt")
         .map(|line| line.parse::<u16>().unwrap())
         .filter(|candidate| *candidate <= 2020u16) // filter out anything that is obviously too big
@@ -9,6 +9,7 @@ fn get_input() -> Vec<u16> {
     items
 }
 
+#[cfg(test)]
 mod tests {
     #[test]
     fn part1() {

@@ -5,7 +5,7 @@ use crate::get_lines;
 use crate::day08::Operation::{Accumulate, Jump, NoOp};
 
 #[derive(PartialEq)]
-enum Operation {
+pub enum Operation {
     /// Increase or decrease the accumulator by the value in the argument.
     /// Move to the instruction directly below.
     Accumulate,
@@ -16,7 +16,7 @@ enum Operation {
 }
 
 impl Operation {
-    fn update_total(&self, previous_total: i32, argument: i32) -> i32 {
+    pub fn update_total(&self, previous_total: i32, argument: i32) -> i32 {
         match &self {
             Accumulate => previous_total + argument,
             NoOp => previous_total,
@@ -24,7 +24,7 @@ impl Operation {
         }
     }
 
-    fn update_index(&self, previous_index: usize, argument: i32) -> usize {
+    pub fn update_index(&self, previous_index: usize, argument: i32) -> usize {
         match &self {
             Accumulate => previous_index + 1,
             NoOp => previous_index + 1,
@@ -49,7 +49,7 @@ impl FromStr for Operation {
 }
 
 /// A boot code instruction
-struct Instruction {
+pub struct Instruction {
     operation: Operation,
     argument: i32,
 }
@@ -61,7 +61,7 @@ impl Instruction {
     /// - `previous_total` - the current accumulator value
     ///
     /// Returns: the new accumulator value
-    fn update_total(&self, previous_total: i32) -> i32 {
+    pub fn update_total(&self, previous_total: i32) -> i32 {
         self.operation.update_total(previous_total, self.argument)
     }
 
@@ -71,7 +71,7 @@ impl Instruction {
     /// - `previous_index` - the current instruction index
     ///
     /// Returns: the index of the next instruction to execute
-    fn update_index(&self, previous_index: usize) -> usize {
+    pub fn update_index(&self, previous_index: usize) -> usize {
         self.operation.update_index(previous_index, self.argument)
     }
 }
@@ -104,12 +104,13 @@ impl FromStr for Instruction {
     }
 }
 
-fn get_instructions() -> Vec<Instruction> {
+pub fn get_instructions() -> Vec<Instruction> {
     get_lines("/input/day-8-input.txt")
         .flat_map(|line| line.parse())
         .collect()
 }
 
+#[cfg(test)]
 mod tests {
     use crate::day08::Operation::{Accumulate, Jump, NoOp};
     use crate::day08::{get_instructions, Instruction};

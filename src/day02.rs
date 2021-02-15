@@ -2,16 +2,16 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::get_lines;
 
-fn get_input() -> impl Iterator<Item = String> {
+pub fn get_input() -> impl Iterator<Item = String> {
     get_lines("/input/day-2-input.txt")
 }
 
 trait Entry {
     fn is_valid(&self) -> bool;
-    fn build(line: String) -> Self;
+    fn build(line: String) -> Self; // TODO impl FromStr
 }
 
-struct SledEntry {
+pub struct SledEntry {
     c: String,
     password: String,
     min_iterations: usize,
@@ -50,7 +50,7 @@ impl Entry for SledEntry {
     }
 }
 
-struct TobogganEntry {
+pub struct TobogganEntry {
     c: String,
     password: String,
     first_position: usize,
@@ -85,6 +85,7 @@ impl Entry for TobogganEntry {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::day02::{get_input, Entry, SledEntry, TobogganEntry};
 
