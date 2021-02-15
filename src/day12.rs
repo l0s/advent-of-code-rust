@@ -6,7 +6,9 @@ use std::str::FromStr;
 use crate::get_lines;
 
 use crate::day12::Action::{East, Forward, Left, North, Right, South, West};
-use crate::day12::ParseError::{InstructionTooShort, InvalidAction, InvalidValue, ValueInappropriateForAction};
+use crate::day12::ParseError::{
+    InstructionTooShort, InvalidAction, InvalidValue, ValueInappropriateForAction,
+};
 
 #[derive(Debug)]
 enum ParseError {
@@ -118,25 +120,75 @@ impl NavigationInstruction {
     ///           supported
     fn move_ship(&self, bearing: u16, position: Point) -> Result<(u16, Point), String> {
         match self.action {
-            North => Ok((bearing, Point { x: position.x, y: position.y + self.value })),
-            South => Ok((bearing, Point { x: position.x, y: position.y - self.value })),
-            East => Ok((bearing, Point { x: position.x + self.value, y: position.y })),
-            West => Ok((bearing, Point { x: position.x - self.value, y: position.y })),
+            North => Ok((
+                bearing,
+                Point {
+                    x: position.x,
+                    y: position.y + self.value,
+                },
+            )),
+            South => Ok((
+                bearing,
+                Point {
+                    x: position.x,
+                    y: position.y - self.value,
+                },
+            )),
+            East => Ok((
+                bearing,
+                Point {
+                    x: position.x + self.value,
+                    y: position.y,
+                },
+            )),
+            West => Ok((
+                bearing,
+                Point {
+                    x: position.x - self.value,
+                    y: position.y,
+                },
+            )),
             Left => {
                 let relative_bearing = bearing as i16 - self.value;
-                let bearing = if relative_bearing < 0 { (relative_bearing + 360) as u16 } else { relative_bearing as u16 };
+                let bearing = if relative_bearing < 0 {
+                    (relative_bearing + 360) as u16
+                } else {
+                    relative_bearing as u16
+                };
                 Ok((bearing, position))
             }
             Right => Ok(((bearing + self.value as u16) % 360, position)),
-            Forward => {
-                match bearing {
-                    0 => Ok((bearing, Point { x: position.x, y: position.y + self.value })),
-                    90 => Ok((bearing, Point { x: position.x + self.value, y: position.y })),
-                    180 => Ok((bearing, Point { x: position.x, y: position.y - self.value })),
-                    270 => Ok((bearing, Point { x: position.x - self.value, y: position.y })),
-                    _ => Err("Unsupported bearing: ".to_owned() + &bearing.to_string())
-                }
-            }
+            Forward => match bearing {
+                0 => Ok((
+                    bearing,
+                    Point {
+                        x: position.x,
+                        y: position.y + self.value,
+                    },
+                )),
+                90 => Ok((
+                    bearing,
+                    Point {
+                        x: position.x + self.value,
+                        y: position.y,
+                    },
+                )),
+                180 => Ok((
+                    bearing,
+                    Point {
+                        x: position.x,
+                        y: position.y - self.value,
+                    },
+                )),
+                270 => Ok((
+                    bearing,
+                    Point {
+                        x: position.x - self.value,
+                        y: position.y,
+                    },
+                )),
+                _ => Err("Unsupported bearing: ".to_owned() + &bearing.to_string()),
+            },
         }
     }
 
@@ -149,10 +201,34 @@ impl NavigationInstruction {
     /// Returns - The new positions of the waypoint and the ferry
     fn move_ship_using_waypoint(&self, waypoint: Point, ship: Point) -> (Point, Point) {
         match self.action {
-            North => (Point { x: waypoint.x, y: waypoint.y + self.value }, ship),
-            South => (Point { x: waypoint.x, y: waypoint.y - self.value }, ship),
-            East => (Point { x: waypoint.x + self.value, y: waypoint.y }, ship),
-            West => (Point { x: waypoint.x - self.value, y: waypoint.y }, ship),
+            North => (
+                Point {
+                    x: waypoint.x,
+                    y: waypoint.y + self.value,
+                },
+                ship,
+            ),
+            South => (
+                Point {
+                    x: waypoint.x,
+                    y: waypoint.y - self.value,
+                },
+                ship,
+            ),
+            East => (
+                Point {
+                    x: waypoint.x + self.value,
+                    y: waypoint.y,
+                },
+                ship,
+            ),
+            West => (
+                Point {
+                    x: waypoint.x - self.value,
+                    y: waypoint.y,
+                },
+                ship,
+            ),
             Left => {
                 // rotate the waypoint around the ship, anti-clockwise (when viewed from above),
                 // by the number of degrees specified in the instruction
@@ -162,7 +238,10 @@ impl NavigationInstruction {
                 let mut latitudinal_difference = waypoint.y - ship.y;
 
                 // relocate the waypoint relative to the ship
-                let mut waypoint = Point { x: waypoint.x, y: waypoint.y };
+                let mut waypoint = Point {
+                    x: waypoint.x,
+                    y: waypoint.y,
+                };
                 for _ in 0..self.value / 90 {
                     waypoint.x = ship.x - latitudinal_difference;
                     waypoint.y = ship.y + longitudinal_difference;
@@ -180,7 +259,10 @@ impl NavigationInstruction {
                 let mut latitudinal_difference = waypoint.y - ship.y;
 
                 // relocate the waypoint relative to the ship
-                let mut waypoint = Point { x: waypoint.x, y: waypoint.y };
+                let mut waypoint = Point {
+                    x: waypoint.x,
+                    y: waypoint.y,
+                };
                 for _ in 0..self.value / 90 {
                     waypoint.x = ship.x + latitudinal_difference;
                     waypoint.y = ship.y - longitudinal_difference;
@@ -194,8 +276,14 @@ impl NavigationInstruction {
                 let longitudinal_difference = waypoint.x - ship.x;
                 let latitudinal_difference = waypoint.y - ship.y;
 
-                let mut waypoint = Point { x: waypoint.x, y: waypoint.y };
-                let mut ship = Point { x: ship.x, y: ship.y };
+                let mut waypoint = Point {
+                    x: waypoint.x,
+                    y: waypoint.y,
+                };
+                let mut ship = Point {
+                    x: ship.x,
+                    y: ship.y,
+                };
 
                 ship.x += longitudinal_difference * self.value;
                 ship.y += latitudinal_difference * self.value;
@@ -211,21 +299,22 @@ impl NavigationInstruction {
     }
 }
 
-fn get_instructions() -> impl Iterator<Item=Result<NavigationInstruction, String>> {
+fn get_instructions() -> impl Iterator<Item = Result<NavigationInstruction, String>> {
     get_lines("/input/day-12-input.txt")
         .map(|line| line.parse::<NavigationInstruction>())
-        .map(|parse_result| parse_result
-            .map_err(|parse_error| describe_error(parse_error)))
+        .map(|parse_result| parse_result.map_err(|parse_error| describe_error(parse_error)))
 }
 
 fn describe_error(error: ParseError) -> String {
     match error {
         ParseError::InvalidAction(action) => format!("Invalid action: {}", action),
-        ParseError::InstructionTooShort(instruction) =>
-            format!("Instruction too short: {}", instruction),
+        ParseError::InstructionTooShort(instruction) => {
+            format!("Instruction too short: {}", instruction)
+        }
         ParseError::InvalidValue(error) => format!("Could not parse value: {}", error),
-        ParseError::ValueInappropriateForAction(action, value) =>
-            format!("Value {} is not appropriate for action {:?}", value, action),
+        ParseError::ValueInappropriateForAction(action, value) => {
+            format!("Value {} is not appropriate for action {:?}", value, action)
+        }
     }
 }
 
@@ -235,10 +324,13 @@ mod tests {
     #[test]
     fn part1() {
         let (_, position) = get_instructions()
-            .try_fold((90u16, Point { x: 0, y: 0 }), // "The ship starts by facing east."
-                      |coordinates, result| result
-                          .and_then(|instruction| instruction
-                              .move_ship(coordinates.0, coordinates.1)))
+            .try_fold(
+                (90u16, Point { x: 0, y: 0 }), // "The ship starts by facing east."
+                |coordinates, result| {
+                    result
+                        .and_then(|instruction| instruction.move_ship(coordinates.0, coordinates.1))
+                },
+            )
             .expect("Invalid instruction found");
 
         println!("Part 1: {}", position.get_manhattan_distance());
@@ -248,10 +340,14 @@ mod tests {
     fn part2() {
         let (_, ship) = get_instructions()
             // "The waypoint starts 10 units east and 1 unit north relative to the ship."
-            .try_fold((Point { x: 10, y: 1 }, Point { x: 0, y: 0 }),
-                      |positions, result| result
-                          .and_then(|instruction| Ok(instruction
-                              .move_ship_using_waypoint(positions.0, positions.1))))
+            .try_fold(
+                (Point { x: 10, y: 1 }, Point { x: 0, y: 0 }),
+                |positions, result| {
+                    result.and_then(|instruction| {
+                        Ok(instruction.move_ship_using_waypoint(positions.0, positions.1))
+                    })
+                },
+            )
             .expect("Invalid instruction found");
         println!("Part 2: {}", ship.get_manhattan_distance());
     }

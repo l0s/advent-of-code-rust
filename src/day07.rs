@@ -36,14 +36,20 @@ impl Rule {
         }
         let contained = contained.unwrap().trim();
         if contained.eq("no other bags.") {
-            return Some(Rule { container_colour, contained_counts: HashMap::new() });
+            return Some(Rule {
+                container_colour,
+                contained_counts: HashMap::new(),
+            });
         }
-        let contained_counts = CONTAINED_PHRASE_SEPARATOR.split(contained)
+        let contained_counts = CONTAINED_PHRASE_SEPARATOR
+            .split(contained)
             .map(|phrase| -> Option<(String, u32)> {
                 let phrase = BAG_SUFFIX.replace(phrase, "");
                 let mut phrase_components = phrase.splitn(2, ' ');
 
-                let count = phrase_components.next().and_then(|string| string.parse::<u32>().ok());
+                let count = phrase_components
+                    .next()
+                    .and_then(|string| string.parse::<u32>().ok());
                 if count.is_none() {
                     return None;
                 }
@@ -57,25 +63,32 @@ impl Rule {
             })
             .flatten()
             .collect::<HashMap<String, u32>>();
-        Some(Rule { container_colour, contained_counts })
+        Some(Rule {
+            container_colour,
+            contained_counts,
+        })
     }
 
     fn can_contain(&self, colour: &str, rule_map: &HashMap<String, Rule>) -> bool {
         if (&self).contained_counts.contains_key(colour) {
             return true;
         }
-        (&self).contained_counts.keys()
+        (&self)
+            .contained_counts
+            .keys()
             .map(|key| rule_map.get(key))
             .any(|rule| -> bool {
                 match rule {
                     None => false,
-                    Some(rule) => rule.can_contain(colour, rule_map)
+                    Some(rule) => rule.can_contain(colour, rule_map),
                 }
             })
     }
 
     fn count_contained(&self, rule_map: &HashMap<String, Rule>) -> u32 {
-        let sum = &self.contained_counts.iter()
+        let sum = &self
+            .contained_counts
+            .iter()
             .flat_map(|(colour, multiplier)| -> Option<u32> {
                 let sub_rule = rule_map.get(colour);
                 if sub_rule.is_none() {
@@ -85,7 +98,8 @@ impl Rule {
                 let base = sub_rule.count_contained(rule_map);
 
                 Some(base * multiplier)
-            }).sum();
+            })
+            .sum();
         sum + 1u32
     }
 }
@@ -96,7 +110,8 @@ mod tests {
     #[test]
     fn part1() {
         let map = get_input();
-        let count = map.values()
+        let count = map
+            .values()
             .filter(|rule| rule.can_contain("shiny gold", &map))
             .count();
         println!("Part 1: {}", count);
@@ -109,5 +124,4 @@ mod tests {
         let result = bag.count_contained(&map) - 1;
         println!("Part 2: {}", result);
     }
-
 }

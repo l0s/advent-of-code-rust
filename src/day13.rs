@@ -7,8 +7,9 @@ use std::num::ParseIntError;
 
 use crate::get_lines;
 
-use crate::day13::ParseError::{EarliestDepartureNotSpecified, InvalidBusId, InvalidDepartureTime,
-                               NoBusesSpecified};
+use crate::day13::ParseError::{
+    EarliestDepartureNotSpecified, InvalidBusId, InvalidDepartureTime, NoBusesSpecified,
+};
 
 /// A shuttle bus that departs from the sea port, travels to the airport, then several other
 /// destinations, then returns to the sea port
@@ -40,9 +41,7 @@ impl Bus {
 
 impl Display for Bus {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f,
-               "Bus( id: {}, index: {} )",
-               self.id, self.index)
+        write!(f, "Bus( id: {}, index: {} )", self.id, self.index)
     }
 }
 
@@ -73,9 +72,11 @@ struct BusCandidate {
 
 impl Display for BusCandidate {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f,
-               "BusCandidate( bus: {}, earliest_departure: {}, time_to_wait: {}",
-               self.bus, self.earliest_departure, self.time_to_wait)
+        write!(
+            f,
+            "BusCandidate( bus: {}, earliest_departure: {}, time_to_wait: {}",
+            self.bus, self.earliest_departure, self.time_to_wait
+        )
     }
 }
 
@@ -126,7 +127,8 @@ enum ParseError {
 ///
 /// Returns: All of the bus candidates. For any malformed bus value, a `ParseError` is returned.
 fn parse_buses(earliest_departure: u32, string: String) -> Vec<Result<BusCandidate, ParseError>> {
-    string.split(',')
+    string
+        .split(',')
         .enumerate()
         .filter(|(_, id)| *id != "x")
         .map(|(index, id)| -> Result<BusCandidate, ParseError> {
@@ -137,14 +139,19 @@ fn parse_buses(earliest_departure: u32, string: String) -> Vec<Result<BusCandida
             let bus_id = bus_id.unwrap();
             let bus = Bus { id: bus_id, index };
             if earliest_departure % bus_id as u32 == 0 {
-                return Ok(BusCandidate { bus, earliest_departure, time_to_wait: 0 });
+                return Ok(BusCandidate {
+                    bus,
+                    earliest_departure,
+                    time_to_wait: 0,
+                });
             }
             Ok(BusCandidate {
                 bus,
                 earliest_departure,
                 time_to_wait: bus.get_time_to_wait(earliest_departure),
             })
-        }).collect()
+        })
+        .collect()
 }
 
 /// Parse the problem input
@@ -170,14 +177,16 @@ fn parse_input() -> Result<Vec<BusCandidate>, ParseError> {
     }
     let buses = buses.unwrap();
     let buses = parse_buses(earliest_departure, buses);
-    let mut errors = buses.iter()
+    let mut errors = buses
+        .iter()
         .filter(|result| result.is_err())
         .map(move |result| result.as_ref().unwrap_err().to_owned());
     match errors.next() {
         None => {}
         Some(error) => return Err(error),
     }
-    let buses = buses.iter()
+    let buses = buses
+        .iter()
         .map(move |result| result.as_ref().unwrap().to_owned())
         .collect::<Vec<BusCandidate>>();
     Ok(buses)
@@ -204,7 +213,7 @@ fn find_inverse(partial_product: u64, mod_space: u16) -> u64 {
 }
 
 mod tests {
-    use crate::day13::{Bus, find_inverse, parse_input};
+    use crate::day13::{find_inverse, parse_input, Bus};
 
     /// Find the earliest bus you can take to the airport.
     #[test]
@@ -221,7 +230,8 @@ mod tests {
     /// listed bus departs at that subsequent minute.
     #[test]
     fn part2() {
-        let buses = parse_input().expect("Error parsing input")
+        let buses = parse_input()
+            .expect("Error parsing input")
             .iter()
             .map(|candidate| candidate.bus)
             .collect::<Vec<Bus>>();
@@ -244,13 +254,13 @@ mod tests {
 
             // Multiply by all of the other mod spaces (circuit times or bus IDs) in order to cancel
             // them out while applying `mod bus_id`.
-            let product_of_other_mod_spaces = buses.clone()
+            let product_of_other_mod_spaces = buses
+                .clone()
                 .iter()
                 .filter(|other| **other != bus)
                 .fold(1u64, |acc, other| acc * other.id as u64);
 
-            let inverse =
-                find_inverse(product_of_other_mod_spaces, bus.id);
+            let inverse = find_inverse(product_of_other_mod_spaces, bus.id);
 
             let index = bus.index as u16;
             if bus.id > bus.index as u16 {

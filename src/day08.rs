@@ -83,25 +83,24 @@ impl FromStr for Instruction {
         let mut components = s.splitn(2, ' ');
         let operation = match components.next() {
             None => return Err(()),
-            Some(operation) => {
-                match operation.parse::<Operation>() {
-                    Ok(operation) => operation,
-                    Err(e) => return Err(e),
-                }
-            }
+            Some(operation) => match operation.parse::<Operation>() {
+                Ok(operation) => operation,
+                Err(e) => return Err(e),
+            },
         };
 
         let argument = match components.next() {
             None => return Err(()),
-            Some(argument) => {
-                match argument.parse::<i32>() {
-                    Ok(argument) => argument,
-                    Err(_) => return Err(()),
-                }
-            }
+            Some(argument) => match argument.parse::<i32>() {
+                Ok(argument) => argument,
+                Err(_) => return Err(()),
+            },
         };
 
-        Ok(Instruction { operation, argument })
+        Ok(Instruction {
+            operation,
+            argument,
+        })
     }
 }
 
@@ -112,8 +111,8 @@ fn get_instructions() -> Vec<Instruction> {
 }
 
 mod tests {
-    use crate::day08::{get_instructions, Instruction};
     use crate::day08::Operation::{Accumulate, Jump, NoOp};
+    use crate::day08::{get_instructions, Instruction};
 
     #[test]
     fn part1() {
@@ -141,8 +140,15 @@ mod tests {
                 // "No acc instructions were harmed in the corruption of this boot code."
                 continue;
             }
-            let operation = if to_replace.operation == NoOp { Jump } else { NoOp };
-            let replacement = Instruction { operation, argument: to_replace.argument };
+            let operation = if to_replace.operation == NoOp {
+                Jump
+            } else {
+                NoOp
+            };
+            let replacement = Instruction {
+                operation,
+                argument: to_replace.argument,
+            };
 
             let mut index = 0_usize;
             let mut accumulator = 0_i32;
@@ -151,7 +157,11 @@ mod tests {
             // "The program is supposed to terminate by attempting to execute an instruction
             // immediately after the last instruction in the file."
             while index < instructions.len() {
-                let instruction = if index == i { &replacement } else { &instructions[index] };
+                let instruction = if index == i {
+                    &replacement
+                } else {
+                    &instructions[index]
+                };
                 if visited[index] {
                     // replacing the instruction causes an infinite loop
                     // try replacing a different one

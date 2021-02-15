@@ -29,7 +29,12 @@ fn get_joltage_adapters() -> Vec<u8> {
 /// * `to` - the joltage of the device that needs to be charged
 /// * `cache` - a history of precomputed arrangement counts. This will be updated prior to the
 ///             method returning.
-fn count_adapter_arrangements(adapters: &[u8], from: u8, to: u8, cache: &mut HashMap<u64, u64>) -> u64 {
+fn count_adapter_arrangements(
+    adapters: &[u8],
+    from: u8,
+    to: u8,
+    cache: &mut HashMap<u64, u64>,
+) -> u64 {
     let hash = || {
         let mut hasher = DefaultHasher::new();
         hasher.write_u8(from);
@@ -78,8 +83,10 @@ mod tests {
     #[test]
     fn test() {
         let joltages = get_joltage_adapters();
-        let target_joltage = joltages.last()
-            .expect("At least one joltage adapter is required.") + 3u8;
+        let target_joltage = joltages
+            .last()
+            .expect("At least one joltage adapter is required.")
+            + 3u8;
 
         // "If you use every adapter in your bag at once, what is the distribution of joltage
         // differences between the charging outlet, the adapters, and your device?"
@@ -91,7 +98,8 @@ mod tests {
         let mut current_joltage = 0u8;
 
         while current_joltage < target_joltage - 3 {
-            let next = joltages.iter()
+            let next = joltages
+                .iter()
                 .filter(|candidate| **candidate > current_joltage)
                 .filter(|candidate| *candidate - current_joltage >= 1)
                 .filter(|candidate| *candidate - current_joltage <= 3)
@@ -101,12 +109,13 @@ mod tests {
             difference_distribution[difference - 1] += 1;
             current_joltage = *next;
         }
-        println!("Part 1: {}",
-                 difference_distribution[0] as u16 * difference_distribution[2] as u16);
-        println!("Part 2: {}",
-                 count_adapter_arrangements(&joltages,
-                                            0,
-                                            target_joltage,
-                                            &mut HashMap::new()));
+        println!(
+            "Part 1: {}",
+            difference_distribution[0] as u16 * difference_distribution[2] as u16
+        );
+        println!(
+            "Part 2: {}",
+            count_adapter_arrangements(&joltages, 0, target_joltage, &mut HashMap::new())
+        );
     }
 }

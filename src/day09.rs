@@ -8,7 +8,7 @@ use crate::get_lines;
 ///
 /// The data appears to be encrypted with the eXchange-Masking Addition System (XMAS) which,
 /// conveniently for you, is an old cypher with an important weakness."
-fn get_data() -> impl Iterator<Item=u64> {
+fn get_data() -> impl Iterator<Item = u64> {
     get_lines("/input/day-9-input.txt")
         .map(|line| line.parse())
         .map(|result| result.unwrap()) // panic on invalid XMAS code
@@ -34,7 +34,8 @@ mod tests {
                 Some(number) => {
                     // "each number you receive should be the sum of any two of the 25 immediately
                     // previous numbers"
-                    let mut addends = buffer.iter()
+                    let mut addends = buffer
+                        .iter()
                         // no negative numbers in the input, so filter out anything larger than our
                         // target
                         .filter(|previous| **previous <= number)
@@ -72,8 +73,12 @@ mod tests {
             let mut max = total;
             for j in i + 1..data.len() {
                 let current = data[j];
-                if current < min { min = current }
-                if current > max { max = current }
+                if current < min {
+                    min = current
+                }
+                if current > max {
+                    max = current
+                }
                 total += current;
                 if total == invalid {
                     let result = min + max;

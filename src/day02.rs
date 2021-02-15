@@ -2,7 +2,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::get_lines;
 
-fn get_input() -> impl Iterator<Item=String> {
+fn get_input() -> impl Iterator<Item = String> {
     get_lines("/input/day-2-input.txt")
 }
 
@@ -20,7 +20,8 @@ struct SledEntry {
 
 impl Entry for SledEntry {
     fn is_valid(&self) -> bool {
-        let count: usize = self.password
+        let count: usize = self
+            .password
             .graphemes(true)
             .filter(|grapheme| *grapheme == self.c)
             .count() as usize;
@@ -33,7 +34,8 @@ impl Entry for SledEntry {
         let c = components.next().unwrap().replace(":", "");
         let password = components.next().unwrap().to_owned();
 
-        let mut range_components = range_string.split('-')
+        let mut range_components = range_string
+            .split('-')
             .map(|component| component.parse::<usize>())
             .map(Result::unwrap);
         let min_iterations = range_components.next().unwrap();
@@ -57,9 +59,7 @@ struct TobogganEntry {
 
 impl Entry for TobogganEntry {
     fn is_valid(&self) -> bool {
-        let password_chars = &self.password
-            .graphemes(true)
-            .collect::<Vec<&str>>();
+        let password_chars = &self.password.graphemes(true).collect::<Vec<&str>>();
         let x = password_chars[&self.first_position - 1];
         let y = password_chars[&self.second_position - 1];
         (x == &self.c) ^ (y == &self.c)
@@ -70,7 +70,8 @@ impl Entry for TobogganEntry {
         let position_str = components.next().unwrap();
         let c = components.next().unwrap().replace(":", "");
         let password = components.next().unwrap().to_owned();
-        let mut position_components = position_str.split('-')
+        let mut position_components = position_str
+            .split('-')
             .map(|component| component.parse::<usize>())
             .map(Result::unwrap);
         let first_position: usize = position_components.next().unwrap();
@@ -85,17 +86,23 @@ impl Entry for TobogganEntry {
 }
 
 mod tests {
-    use crate::day02::{Entry, get_input, SledEntry, TobogganEntry};
+    use crate::day02::{get_input, Entry, SledEntry, TobogganEntry};
 
     #[test]
     fn part1() {
-        let count = get_input().map(SledEntry::build).filter(SledEntry::is_valid).count();
+        let count = get_input()
+            .map(SledEntry::build)
+            .filter(SledEntry::is_valid)
+            .count();
         println!("Part 1: {}", count);
     }
 
     #[test]
     fn part2() {
-        let count = get_input().map(TobogganEntry::build).filter(TobogganEntry::is_valid).count();
+        let count = get_input()
+            .map(TobogganEntry::build)
+            .filter(TobogganEntry::is_valid)
+            .count();
         println!("Part 1: {}", count);
     }
 }

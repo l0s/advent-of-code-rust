@@ -7,7 +7,9 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::get_lines;
 
-use crate::day11::Direction::{East, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West};
+use crate::day11::Direction::{
+    East, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West,
+};
 use crate::day11::Position::{EmptySeat, Floor, OccupiedSeat};
 
 /// A position in the seating layout
@@ -39,16 +41,19 @@ fn read_seat_layout() -> Vec<Vec<Position>> {
                 .map(|grapheme| Position::from_str(grapheme))
                 .flatten()
                 .collect()
-        }).collect()
+        })
+        .collect()
 }
 
 /// "Now, you just need to model the people who will be arriving shortly. Fortunately, people are
 /// entirely predictable and always follow a simple set of rules. All decisions are based on the
 /// number of occupied seats adjacent to a given seat (one of the eight positions immediately up,
 /// down, left, right, or diagonal from the seat)."
-fn update_seat_based_on_neighbours(row_index: usize,
-                                   column_index: usize,
-                                   source: &Vec<Vec<Position>>) -> Position {
+fn update_seat_based_on_neighbours(
+    row_index: usize,
+    column_index: usize,
+    source: &Vec<Vec<Position>>,
+) -> Position {
     let row = &source[row_index];
     let has_preceding_row = row_index > 0;
     let has_subsequent_row = row_index < source.len() - 1;
@@ -153,8 +158,7 @@ fn update_seats_based_on_neighbours(seat_layout: &Vec<Vec<Position>>) -> Vec<Vec
     for i in 0..seat_layout.len() {
         let row = &seat_layout[i];
         for j in 0..row.len() {
-            new_layout[i][j] =
-                update_seat_based_on_neighbours(i, j, seat_layout);
+            new_layout[i][j] = update_seat_based_on_neighbours(i, j, seat_layout);
         }
     }
     new_layout
@@ -186,11 +190,16 @@ enum Direction {
 }
 
 impl Direction {
-    fn has_occupied_seat_in_sight(&self, vantage_row: usize, vantage_column: usize,
-                                  source: &Vec<Vec<Position>>, max_columns: usize) -> bool {
-        for (i, j) in self.get_visible_seat_indices(vantage_row, vantage_column,
-                                                    source.len(),
-                                                    max_columns) {
+    fn has_occupied_seat_in_sight(
+        &self,
+        vantage_row: usize,
+        vantage_column: usize,
+        source: &Vec<Vec<Position>>,
+        max_columns: usize,
+    ) -> bool {
+        for (i, j) in
+            self.get_visible_seat_indices(vantage_row, vantage_column, source.len(), max_columns)
+        {
             match source[i][j] {
                 EmptySeat => return false,
                 OccupiedSeat => return true,
@@ -199,11 +208,13 @@ impl Direction {
         }
         false
     }
-    fn get_visible_seat_indices(&self,
-                                vantage_row: usize,
-                                vantage_column: usize,
-                                max_rows: usize,
-                                max_columns: usize) -> Box<dyn Iterator<Item=(usize, usize)>> {
+    fn get_visible_seat_indices(
+        &self,
+        vantage_row: usize,
+        vantage_column: usize,
+        max_rows: usize,
+        max_columns: usize,
+    ) -> Box<dyn Iterator<Item = (usize, usize)>> {
         match self {
             Direction::North => {
                 let row_indices = (0..vantage_row).rev();
@@ -263,21 +274,28 @@ impl Direction {
 /// * `source` - the full seating layout
 ///
 /// Returns: the new seating status
-fn update_seat_based_on_visibility(row_index: usize, column_index: usize,
-                                   source: &Vec<Vec<Position>>) -> Position {
+fn update_seat_based_on_visibility(
+    row_index: usize,
+    column_index: usize,
+    source: &Vec<Vec<Position>>,
+) -> Position {
     match source[row_index][column_index] {
         Floor => Floor,
         EmptySeat => {
             // "empty seats that see no occupied seats become occupied"
             let row = &source[row_index];
             let mut has_occupied_seat_in_sight = false;
-            for direction in [North, NorthWest, West, SouthWest, South, SouthEast, East,
-                NorthEast].iter() {
-                has_occupied_seat_in_sight |=
-                    direction.has_occupied_seat_in_sight(row_index,
-                                                         column_index,
-                                                         source,
-                                                         row.len());
+            for direction in [
+                North, NorthWest, West, SouthWest, South, SouthEast, East, NorthEast,
+            ]
+            .iter()
+            {
+                has_occupied_seat_in_sight |= direction.has_occupied_seat_in_sight(
+                    row_index,
+                    column_index,
+                    source,
+                    row.len(),
+                );
                 if has_occupied_seat_in_sight {
                     break;
                 }
@@ -293,13 +311,17 @@ fn update_seat_based_on_visibility(row_index: usize, column_index: usize,
             // empty"
             let row = &source[row_index];
             let mut visible_occupied_seats = 0u8;
-            for direction in [North, NorthWest, West, SouthWest, South, SouthEast, East,
-                NorthEast].iter() {
-                let has_occupied_seat_in_sight =
-                    direction.has_occupied_seat_in_sight(row_index,
-                                                         column_index,
-                                                         source,
-                                                         row.len());
+            for direction in [
+                North, NorthWest, West, SouthWest, South, SouthEast, East, NorthEast,
+            ]
+            .iter()
+            {
+                let has_occupied_seat_in_sight = direction.has_occupied_seat_in_sight(
+                    row_index,
+                    column_index,
+                    source,
+                    row.len(),
+                );
                 if has_occupied_seat_in_sight {
                     visible_occupied_seats += 1;
                 }
@@ -322,15 +344,17 @@ fn update_seats_based_on_visibility(seat_layout: &Vec<Vec<Position>>) -> Vec<Vec
     for i in 0..seat_layout.len() {
         let row = &seat_layout[i];
         for j in 0..row.len() {
-            new_layout[i][j] =
-                update_seat_based_on_visibility(i, j, seat_layout);
+            new_layout[i][j] = update_seat_based_on_visibility(i, j, seat_layout);
         }
     }
     new_layout
 }
 
 mod tests {
-    use crate::day11::{count_occupied, read_seat_layout, update_seats_based_on_neighbours, update_seats_based_on_visibility};
+    use crate::day11::{
+        count_occupied, read_seat_layout, update_seats_based_on_neighbours,
+        update_seats_based_on_visibility,
+    };
 
     #[test]
     fn part1() {

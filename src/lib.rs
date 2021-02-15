@@ -1,4 +1,5 @@
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 
 mod day01;
 mod day02;
@@ -14,12 +15,12 @@ mod day11;
 mod day12;
 mod day13;
 
-use std::io::{BufReader, BufRead};
+use crate::BufReadResult::{BufferingError, EndOfBlock, EndOfInput, PartialBlock};
 use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::path::Path;
-use crate::BufReadResult::{BufferingError, EndOfBlock, PartialBlock, EndOfInput};
 
-pub fn get_lines(file: &str) -> impl Iterator<Item=String> {
+pub fn get_lines(file: &str) -> impl Iterator<Item = String> {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let file_name = String::from(manifest_dir) + file;
     let path = Path::new(&file_name);
@@ -33,7 +34,7 @@ pub fn get_lines(file: &str) -> impl Iterator<Item=String> {
 /// This allows one to iterate through blocks of text without needing to read the whole input into
 /// memory at once. The specific delimiter it looks for is "\n\n". No other delimiters are supported.
 struct Blocks<R: BufRead> {
-    reader: R
+    reader: R,
 }
 
 enum BufReadResult<'a, E> {
@@ -76,9 +77,7 @@ impl<R: BufRead> Blocks<R> {
                 }
                 PartialBlock(&buffer)
             }
-            Err(error) => {
-                BufferingError(error)
-            }
+            Err(error) => BufferingError(error),
         };
     }
 }
@@ -87,10 +86,14 @@ impl<R: BufRead> Iterator for Blocks<R> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut bytes = vec!();
+        let mut bytes = vec![];
 
         loop {
-            let previous_byte = if bytes.len() > 0 { bytes[bytes.len() - 1] } else { b'_' };
+            let previous_byte = if bytes.len() > 0 {
+                bytes[bytes.len() - 1]
+            } else {
+                b'_'
+            };
             let mut bytes_read = 0_usize;
             let mut complete = false;
             let mut result = None;
@@ -125,7 +128,7 @@ impl<R: BufRead> Iterator for Blocks<R> {
     }
 }
 
-pub fn get_block_strings(file: &str) -> impl Iterator<Item=String> {
+pub fn get_block_strings(file: &str) -> impl Iterator<Item = String> {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let file_name = String::from(manifest_dir) + file;
     let path = Path::new(&file_name);
