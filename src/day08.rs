@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 use crate::day08::Operation::{Accumulate, Jump, NoOp};
 

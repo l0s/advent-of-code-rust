@@ -3,7 +3,7 @@
 use std::num::ParseIntError;
 use std::str::FromStr;
 
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 use crate::day12::Action::{East, Forward, Left, North, Right, South, West};
 use crate::day12::ParseError::{InstructionTooShort, InvalidAction, InvalidValue, ValueInappropriateForAction};

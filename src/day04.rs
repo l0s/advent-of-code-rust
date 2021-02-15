@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use advent_of_code::get_block_strings;
+use crate::get_block_strings;
 
 fn get_input() -> impl Iterator<Item=String> {
     get_block_strings("/input/day-4-input.txt")

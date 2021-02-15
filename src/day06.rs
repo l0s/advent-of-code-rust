@@ -1,4 +1,4 @@
-use advent_of_code::get_block_strings;
+use crate::get_block_strings;
 
 fn get_input() -> impl Iterator<Item=Vec<String>> {
     get_block_strings("/input/day-6-input.txt")

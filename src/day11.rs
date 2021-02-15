@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use unicode_segmentation::UnicodeSegmentation;
 
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 use crate::day11::Direction::{East, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West};
 use crate::day11::Position::{EmptySeat, Floor, OccupiedSeat};

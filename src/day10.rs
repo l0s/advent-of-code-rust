@@ -2,7 +2,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 // https://adventofcode.com/2020/day/10
 

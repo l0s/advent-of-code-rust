@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
 use std::num::ParseIntError;
 
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 use crate::day13::ParseError::{EarliestDepartureNotSpecified, InvalidBusId, InvalidDepartureTime,
                                NoBusesSpecified};

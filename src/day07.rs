@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use regex::Regex;
 
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 fn get_input() -> HashMap<String, Rule> {
     get_lines("/input/day-7-input.txt")

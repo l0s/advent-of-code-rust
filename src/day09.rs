@@ -1,4 +1,4 @@
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 // https://adventofcode.com/2020/day/9
 

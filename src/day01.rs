@@ -1,4 +1,4 @@
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 fn get_input() -> Vec<u16> {
     let mut items: Vec<u16> = get_lines("/input/day-1-input.txt")

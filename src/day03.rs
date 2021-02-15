@@ -1,4 +1,4 @@
-use advent_of_code::get_lines;
+use crate::get_lines;
 
 fn get_input() -> impl Iterator<Item=String> {
     get_lines("/input/day-3-input.txt")
