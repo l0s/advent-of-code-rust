@@ -62,7 +62,7 @@ impl Entry for TobogganEntry {
         let password_chars = &self.password.graphemes(true).collect::<Vec<&str>>();
         let x = password_chars[&self.first_position - 1];
         let y = password_chars[&self.second_position - 1];
-        (x == &self.c) ^ (y == &self.c)
+        (x == self.c) ^ (y == self.c)
     }
 
     fn build(line: String) -> Self {

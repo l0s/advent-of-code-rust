@@ -1,13 +1,17 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use regex::Regex;
 
+use crate::day07::ParseError::{
+    BagColourMissing, BagCountMissing, ContainerColourMissing, NothingContained,
+};
 use crate::get_lines;
 
 pub fn get_input() -> HashMap<String, Rule> {
     get_lines("/input/day-7-input.txt")
-        .map(|sentence| Rule::from_sentence(sentence))
-        .flatten()
+        .map(|sentence| sentence.parse::<Rule>())
+        .flatten() // FIXME return Err if _any_ sentence cannot be parsed
         .map(|rule| (rule.container_colour.to_owned(), rule))
         .collect()
 }
@@ -17,33 +21,40 @@ pub struct Rule {
     contained_counts: HashMap<String, u32>,
 }
 
-impl Rule { // TODO impl FromStr
-    pub fn from_sentence(sentence: String) -> Option<Rule> {
+pub enum ParseError {
+    ContainerColourMissing,
+    NothingContained,
+    BagCountMissing,
+    BagColourMissing,
+}
+
+impl FromStr for Rule {
+    type Err = ParseError;
+
+    fn from_str(sentence: &str) -> Result<Self, Self::Err> {
         lazy_static! {
-            static ref RULE_COMPONENT_SEPARATOR: Regex = Regex::new(" bags contain ").unwrap();
-            static ref CONTAINED_PHRASE_SEPARATOR: Regex = Regex::new(", ").unwrap();
             static ref BAG_SUFFIX: Regex = Regex::new(" bag.*$").unwrap();
         }
-        let mut components = RULE_COMPONENT_SEPARATOR.splitn(&sentence, 2);
+        let mut components = sentence.splitn(2, " bags contain ");
         let container_colour = components.next();
         if container_colour.is_none() {
-            return None;
+            return Err(ContainerColourMissing);
         }
         let container_colour = container_colour.unwrap().trim().to_owned();
         let contained = components.next();
         if contained.is_none() {
-            return None;
+            return Err(NothingContained);
         }
         let contained = contained.unwrap().trim();
         if contained.eq("no other bags.") {
-            return Some(Rule {
+            return Ok(Rule {
                 container_colour,
                 contained_counts: HashMap::new(),
             });
         }
-        let contained_counts = CONTAINED_PHRASE_SEPARATOR
-            .split(contained)
-            .map(|phrase| -> Option<(String, u32)> {
+        let contained_counts = contained
+            .split(", ")
+            .map(|phrase| -> Result<(String, u32), Self::Err> {
                 let phrase = BAG_SUFFIX.replace(phrase, "");
                 let mut phrase_components = phrase.splitn(2, ' ');
 
@@ -51,30 +62,31 @@ impl Rule { // TODO impl FromStr
                     .next()
                     .and_then(|string| string.parse::<u32>().ok());
                 if count.is_none() {
-                    return None;
+                    return Err(BagCountMissing);
                 }
 
                 let colour = phrase_components.next();
                 if colour.is_none() {
-                    return None;
+                    return Err(BagColourMissing);
                 }
 
-                Some((colour.unwrap().trim().to_owned(), count.unwrap()))
+                Ok((colour.unwrap().trim().to_owned(), count.unwrap()))
             })
-            .flatten()
+            .flatten() // FIXME return Err if _any_ phrase cannot be parsed
             .collect::<HashMap<String, u32>>();
-        Some(Rule {
+        Ok(Rule {
             container_colour,
             contained_counts,
         })
     }
+}
 
+impl Rule {
     pub fn can_contain(&self, colour: &str, rule_map: &HashMap<String, Rule>) -> bool {
-        if (&self).contained_counts.contains_key(colour) {
+        if self.contained_counts.contains_key(colour) {
             return true;
         }
-        (&self)
-            .contained_counts
+        self.contained_counts
             .keys()
             .map(|key| rule_map.get(key))
             .any(|rule| -> bool {
@@ -90,14 +102,10 @@ impl Rule { // TODO impl FromStr
             .contained_counts
             .iter()
             .flat_map(|(colour, multiplier)| -> Option<u32> {
-                let sub_rule = rule_map.get(colour);
-                if sub_rule.is_none() {
-                    return None;
-                }
-                let sub_rule = sub_rule.unwrap();
-                let base = sub_rule.count_contained(rule_map);
-
-                Some(base * multiplier)
+                rule_map.get(colour).map(|sub_rule| -> u32 {
+                    let base = sub_rule.count_contained(rule_map);
+                    base * multiplier
+                })
             })
             .sum();
         sum + 1u32

@@ -21,7 +21,7 @@ pub fn get_map() -> Vec<Vec<bool>> {
 /// Parameters
 /// * `forest` - a map of the area with `true` squares denoting the presence of a tree
 /// * `slope` - the angle at which the toboggan travels
-pub fn count_trees(forest: &Vec<Vec<bool>>, slope: &Slope) -> u8 {
+pub fn count_trees(forest: &[Vec<bool>], slope: &Slope) -> u8 {
     let mut num_trees: u8 = 0;
     let mut row_index: usize = 0;
     let mut column_index: usize = 0;
@@ -56,8 +56,8 @@ impl Slope {
         current_column: usize,
         num_columns: usize,
     ) -> (usize, usize) {
-        let row = current_row + &self.down;
-        let column = current_column + &self.right;
+        let row = current_row + self.down;
+        let column = current_column + self.right;
         // These aren't the only trees, though; due to something you read about once involving
         // arboreal genetics and biome stability, the same pattern repeats to the right many times
         let column = column % num_columns;

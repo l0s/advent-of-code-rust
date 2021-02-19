@@ -1,14 +1,15 @@
 // https://adventofcode.com/2020/day/12
 
+use core::fmt;
+use std::fmt::{Display, Formatter};
 use std::num::ParseIntError;
 use std::str::FromStr;
-
-use crate::get_lines;
 
 use crate::day12::Action::{East, Forward, Left, North, Right, South, West};
 use crate::day12::ParseError::{
     InstructionTooShort, InvalidAction, InvalidValue, ValueInappropriateForAction,
 };
+use crate::get_lines;
 
 #[derive(Debug)]
 pub enum ParseError {
@@ -16,6 +17,25 @@ pub enum ParseError {
     InstructionTooShort(String),
     InvalidValue(ParseIntError),
     ValueInappropriateForAction(Action, i16),
+}
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            ParseError::InvalidAction(action) => write!(f, "Invalid action: {}", action),
+            ParseError::InstructionTooShort(instruction) => {
+                write!(f, "Instruction too short: {}", instruction)
+            }
+            ParseError::InvalidValue(error) => write!(f, "Could not parse value: {}", error),
+            ParseError::ValueInappropriateForAction(action, value) => {
+                write!(
+                    f,
+                    "Value {} is not appropriate for action {:?}",
+                    value, action
+                )
+            }
+        }
+    }
 }
 
 /// An action that the ferry's navigation computer can produce.
@@ -65,25 +85,23 @@ impl FromStr for NavigationInstruction {
             return Err(InstructionTooShort(s.to_owned()));
         }
         let (action, value) = s.split_at(1);
-        let action = action.parse::<Action>();
-        if action.is_err() {
-            return Err(action.unwrap_err());
-        }
-        let action = action.unwrap();
-        let value = value.parse::<i16>();
-        if value.is_err() {
-            return Err(InvalidValue(value.unwrap_err()));
-        }
-        let value = value.unwrap();
-        match action {
-            Left | Right => {
-                if value % 90 != 0 {
-                    return Err(ValueInappropriateForAction(action, value));
-                }
-            }
-            _ => {}
-        };
-        Ok(NavigationInstruction { action, value })
+        action
+            .parse::<Action>()
+            .and_then(|action| -> Result<Self, Self::Err> {
+                value.parse::<i16>().map_err(InvalidValue).and_then(
+                    |value| -> Result<Self, Self::Err> {
+                        match action {
+                            Left | Right => {
+                                if value % 90 != 0 {
+                                    return Err(ValueInappropriateForAction(action, value));
+                                }
+                            }
+                            _ => {}
+                        }
+                        Ok(NavigationInstruction { action, value })
+                    },
+                )
+            })
     }
 }
 
@@ -302,20 +320,7 @@ impl NavigationInstruction {
 pub fn get_instructions() -> impl Iterator<Item = Result<NavigationInstruction, String>> {
     get_lines("/input/day-12-input.txt")
         .map(|line| line.parse::<NavigationInstruction>())
-        .map(|parse_result| parse_result.map_err(|parse_error| describe_error(parse_error)))
-}
-
-pub fn describe_error(error: ParseError) -> String {
-    match error {
-        ParseError::InvalidAction(action) => format!("Invalid action: {}", action),
-        ParseError::InstructionTooShort(instruction) => {
-            format!("Instruction too short: {}", instruction)
-        }
-        ParseError::InvalidValue(error) => format!("Could not parse value: {}", error),
-        ParseError::ValueInappropriateForAction(action, value) => {
-            format!("Value {} is not appropriate for action {:?}", value, action)
-        }
-    }
+        .map(|parse_result| parse_result.map_err(|error| error.to_string()))
 }
 
 #[cfg(test)]
@@ -344,8 +349,8 @@ mod tests {
             .try_fold(
                 (Point { x: 10, y: 1 }, Point { x: 0, y: 0 }),
                 |positions, result| {
-                    result.and_then(|instruction| {
-                        Ok(instruction.move_ship_using_waypoint(positions.0, positions.1))
+                    result.map(|instruction| {
+                        instruction.move_ship_using_waypoint(positions.0, positions.1)
                     })
                 },
             )

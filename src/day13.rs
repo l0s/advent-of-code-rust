@@ -51,10 +51,6 @@ impl PartialEq for Bus {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        self.id != other.id
-    }
 }
 
 /// A bus that **a specific passenger** is considering boarding from the sea port
@@ -86,10 +82,6 @@ impl PartialEq for BusCandidate {
     fn eq(&self, other: &Self) -> bool {
         self.bus == other.bus
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        self.bus != other.bus
-    }
 }
 
 impl PartialOrd for BusCandidate {
@@ -100,12 +92,7 @@ impl PartialOrd for BusCandidate {
 
 impl Ord for BusCandidate {
     fn cmp(&self, other: &Self) -> Ordering {
-        if self.time_to_wait < other.time_to_wait {
-            return Ordering::Less;
-        } else if self.time_to_wait > other.time_to_wait {
-            return Ordering::Greater;
-        }
-        Ordering::Equal
+        self.time_to_wait.cmp(&other.time_to_wait)
     }
 }
 
@@ -132,24 +119,24 @@ fn parse_buses(earliest_departure: u32, string: String) -> Vec<Result<BusCandida
         .enumerate()
         .filter(|(_, id)| *id != "x")
         .map(|(index, id)| -> Result<BusCandidate, ParseError> {
-            let bus_id = id.parse::<u16>();
-            if bus_id.is_err() {
-                return Err(InvalidBusId(bus_id.unwrap_err()));
+            match id.parse::<u16>() {
+                Ok(bus_id) => {
+                    let bus = Bus { id: bus_id, index };
+                    if earliest_departure % bus_id as u32 == 0 {
+                        return Ok(BusCandidate {
+                            bus,
+                            earliest_departure,
+                            time_to_wait: 0,
+                        });
+                    }
+                    Ok(BusCandidate {
+                        bus,
+                        earliest_departure,
+                        time_to_wait: bus.get_time_to_wait(earliest_departure),
+                    })
+                }
+                Err(e) => Err(InvalidBusId(e)),
             }
-            let bus_id = bus_id.unwrap();
-            let bus = Bus { id: bus_id, index };
-            if earliest_departure % bus_id as u32 == 0 {
-                return Ok(BusCandidate {
-                    bus,
-                    earliest_departure,
-                    time_to_wait: 0,
-                });
-            }
-            Ok(BusCandidate {
-                bus,
-                earliest_departure,
-                time_to_wait: bus.get_time_to_wait(earliest_departure),
-            })
         })
         .collect()
 }
@@ -161,29 +148,24 @@ fn parse_buses(earliest_departure: u32, string: String) -> Vec<Result<BusCandida
 /// - `Err(ParseError)` - The first parsing error encountered.
 pub fn parse_input() -> Result<Vec<BusCandidate>, ParseError> {
     let mut lines = get_lines("/input/day-13-input.txt");
-    let earliest_departure = lines.next();
-    if earliest_departure.is_none() {
-        return Err(EarliestDepartureNotSpecified);
-    }
-    let earliest_departure = earliest_departure.unwrap();
-    let earliest_departure = earliest_departure.parse::<u32>();
-    if earliest_departure.is_err() {
-        return Err(InvalidDepartureTime(earliest_departure.unwrap_err()));
-    }
-    let earliest_departure = earliest_departure.unwrap();
-    let buses = lines.next();
-    if buses.is_none() {
-        return Err(NoBusesSpecified);
-    }
-    let buses = buses.unwrap();
-    let buses = parse_buses(earliest_departure, buses);
+    let earliest_departure = match lines.next() {
+        None => return Err(EarliestDepartureNotSpecified),
+        Some(line) => match line.parse::<u32>() {
+            Err(e) => return Err(InvalidDepartureTime(e)),
+            Ok(integer) => integer,
+        },
+    };
+    let buses = match lines.next() {
+        None => return Err(NoBusesSpecified),
+        Some(line) => parse_buses(earliest_departure, line),
+    };
+
     let mut errors = buses
         .iter()
         .filter(|result| result.is_err())
         .map(move |result| result.as_ref().unwrap_err().to_owned());
-    match errors.next() {
-        None => {}
-        Some(error) => return Err(error),
+    if let Some(error) = errors.next() {
+        return Err(error);
     }
     let buses = buses
         .iter()

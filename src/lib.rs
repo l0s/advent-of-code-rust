@@ -89,7 +89,7 @@ impl<R: BufRead> Iterator for Blocks<R> {
         let mut bytes = vec![];
 
         loop {
-            let previous_byte = if bytes.len() > 0 {
+            let previous_byte = if !bytes.is_empty() {
                 bytes[bytes.len() - 1]
             } else {
                 b'_'
@@ -100,7 +100,7 @@ impl<R: BufRead> Iterator for Blocks<R> {
 
             match &self.try_read(previous_byte) {
                 EndOfInput => {
-                    if bytes.len() > 0 {
+                    if !bytes.is_empty() {
                         result = Some(String::from_utf8_lossy(&bytes).trim().to_string());
                     }
                     complete = true;
@@ -120,7 +120,7 @@ impl<R: BufRead> Iterator for Blocks<R> {
                     complete = true;
                 }
             }
-            &self.reader.consume(bytes_read);
+            self.reader.consume(bytes_read);
             if complete {
                 return result;
             }

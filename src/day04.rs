@@ -84,14 +84,14 @@ mod tests {
                             return false;
                         }
                         let cm = cm.unwrap();
-                        cm >= 150 && cm <= 193
+                        (150..=193).contains(&cm)
                     } else if string.ends_with("in") {
                         let inches = string.replace("in", "").parse::<u8>();
                         if inches.is_err() {
                             return false;
                         }
                         let inches = inches.unwrap();
-                        inches >= 59 && inches <= 76
+                        (59..=76).contains(&inches)
                     } else {
                         false
                     }

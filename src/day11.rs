@@ -52,7 +52,7 @@ pub fn read_seat_layout() -> Vec<Vec<Position>> {
 pub fn update_seat_based_on_neighbours(
     row_index: usize,
     column_index: usize,
-    source: &Vec<Vec<Position>>,
+    source: &[Vec<Position>],
 ) -> Position {
     let row = &source[row_index];
     let has_preceding_row = row_index > 0;
@@ -153,8 +153,8 @@ pub fn update_seat_based_on_neighbours(
 }
 
 /// Update each seat based on its adjacent seats. Perform all updates simultaneously.
-pub fn update_seats_based_on_neighbours(seat_layout: &Vec<Vec<Position>>) -> Vec<Vec<Position>> {
-    let mut new_layout = seat_layout.clone();
+pub fn update_seats_based_on_neighbours(seat_layout: &[Vec<Position>]) -> Vec<Vec<Position>> {
+    let mut new_layout = seat_layout.to_owned();
     for i in 0..seat_layout.len() {
         let row = &seat_layout[i];
         for j in 0..row.len() {
@@ -165,7 +165,7 @@ pub fn update_seats_based_on_neighbours(seat_layout: &Vec<Vec<Position>>) -> Vec
 }
 
 /// Count the number of occupied seats in the given layout.
-pub fn count_occupied(seat_layout: &Vec<Vec<Position>>) -> u16 {
+pub fn count_occupied(seat_layout: &[Vec<Position>]) -> u16 {
     let mut count = 0u16;
     for row in seat_layout {
         for cell in row {
@@ -194,7 +194,7 @@ impl Direction {
         &self,
         vantage_row: usize,
         vantage_column: usize,
-        source: &Vec<Vec<Position>>,
+        source: &[Vec<Position>],
         max_columns: usize,
     ) -> bool {
         for (i, j) in
@@ -277,7 +277,7 @@ impl Direction {
 pub fn update_seat_based_on_visibility(
     row_index: usize,
     column_index: usize,
-    source: &Vec<Vec<Position>>,
+    source: &[Vec<Position>],
 ) -> Position {
     match source[row_index][column_index] {
         Floor => Floor,
@@ -339,8 +339,8 @@ pub fn update_seat_based_on_visibility(
 }
 
 /// Update all of the seats simultaneously based on what is visible from each individual seat.
-pub fn update_seats_based_on_visibility(seat_layout: &Vec<Vec<Position>>) -> Vec<Vec<Position>> {
-    let mut new_layout = seat_layout.clone();
+pub fn update_seats_based_on_visibility(seat_layout: &[Vec<Position>]) -> Vec<Vec<Position>> {
+    let mut new_layout = seat_layout.to_owned();
     for i in 0..seat_layout.len() {
         let row = &seat_layout[i];
         for j in 0..row.len() {

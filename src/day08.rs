@@ -3,6 +3,10 @@ use std::str::FromStr;
 use crate::get_lines;
 
 use crate::day08::Operation::{Accumulate, Jump, NoOp};
+use crate::day08::ParseError::{
+    InvalidArgument, InvalidOperation, MissingArgument, MissingOperation,
+};
+use std::num::ParseIntError;
 
 #[derive(PartialEq)]
 pub enum Operation {
@@ -33,7 +37,12 @@ impl Operation {
     }
 }
 
-type ParseError = ();
+pub enum ParseError {
+    InvalidOperation(String),
+    MissingOperation(String),
+    MissingArgument(String),
+    InvalidArgument(ParseIntError),
+}
 
 impl FromStr for Operation {
     type Err = ParseError;
@@ -43,7 +52,7 @@ impl FromStr for Operation {
             "acc" => Ok(Accumulate),
             "nop" => Ok(NoOp),
             "jmp" => Ok(Jump),
-            _ => Err(()),
+            _ => Err(InvalidOperation(String::from(s))),
         }
     }
 }
@@ -82,7 +91,7 @@ impl FromStr for Instruction {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut components = s.splitn(2, ' ');
         let operation = match components.next() {
-            None => return Err(()),
+            None => return Err(MissingOperation(String::from(s))),
             Some(operation) => match operation.parse::<Operation>() {
                 Ok(operation) => operation,
                 Err(e) => return Err(e),
@@ -90,10 +99,10 @@ impl FromStr for Instruction {
         };
 
         let argument = match components.next() {
-            None => return Err(()),
+            None => return Err(MissingArgument(String::from(s))),
             Some(argument) => match argument.parse::<i32>() {
                 Ok(argument) => argument,
-                Err(_) => return Err(()),
+                Err(parse_int_error) => return Err(InvalidArgument(parse_int_error)),
             },
         };
 

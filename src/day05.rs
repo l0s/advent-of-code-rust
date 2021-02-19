@@ -49,7 +49,7 @@ pub fn get_sorted_seat_ids() -> Vec<u16> {
             row as u16 * 8u16 + column as u16
         })
         .collect::<Vec<u16>>();
-    result.sort();
+    result.sort_unstable();
     result
 }
 
@@ -60,7 +60,7 @@ mod tests {
     #[test]
     fn part1() {
         let seat_ids = get_sorted_seat_ids();
-        let last_seat_id = seat_ids.get(seat_ids.len() - 1).unwrap();
+        let last_seat_id = seat_ids.last().expect("No seats found");
         println!("Part 1: {}", last_seat_id);
     }
 

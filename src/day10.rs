@@ -16,7 +16,7 @@ pub fn get_joltage_adapters() -> Vec<u8> {
         .map(|line| line.parse())
         .map(|result| result.unwrap()) // panic on invalid joltage
         .collect::<Vec<u8>>();
-    adapters.sort();
+    adapters.sort_unstable();
     adapters
 }
 
@@ -62,7 +62,7 @@ pub fn count_adapter_arrangements(
         }
         let first = adapters[i];
         let difference = first - from;
-        if difference >= 1 && difference <= 3 {
+        if (1..=3).contains(&difference) {
             let remaining = if i < adapters.len() {
                 adapters.split_at(i + 1).1
             } else {
@@ -101,10 +101,11 @@ mod tests {
         while current_joltage < target_joltage - 3 {
             let next = joltages
                 .iter()
-                .filter(|candidate| **candidate > current_joltage)
-                .filter(|candidate| *candidate - current_joltage >= 1)
-                .filter(|candidate| *candidate - current_joltage <= 3)
-                .next()
+                .find(|candidate| {
+                    **candidate > current_joltage
+                        && **candidate - current_joltage >= 1
+                        && **candidate - current_joltage <= 3
+                })
                 .expect("Required joltage adapter not available.");
             let difference = *next as usize - current_joltage as usize;
             difference_distribution[difference - 1] += 1;

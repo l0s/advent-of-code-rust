@@ -19,6 +19,7 @@ mod tests {
     use std::collections::LinkedList;
 
     use crate::day09::get_data;
+    use std::cmp::Ordering;
 
     #[test]
     fn test() {
@@ -44,15 +45,12 @@ mod tests {
                     addends.sort(); // sort so we can quit search early
                     for i in 0..addends.len() - 1 {
                         let x = addends[i];
-                        for j in i + 1..addends.len() {
-                            let y = addends[j];
-                            let sum = x + y;
+                        for y in addends.iter().skip(i + 1) {
+                            let sum = x + *y;
                             if sum == number {
                                 buffer.push_back(number);
                                 buffer.pop_front();
                                 continue 'candidates;
-                            } else if sum > number {
-                                continue;
                             }
                         }
                     }
@@ -72,23 +70,26 @@ mod tests {
             let mut total = data[i];
             let mut min = total;
             let mut max = total;
-            for j in i + 1..data.len() {
-                let current = data[j];
-                if current < min {
-                    min = current
+            for current in data.iter().skip(i + 1) {
+                if current < &min {
+                    min = *current;
                 }
-                if current > max {
-                    max = current
+                if current > &max {
+                    max = *current;
                 }
                 total += current;
-                if total == invalid {
-                    let result = min + max;
-                    println!("Part 2: {}", result);
-                    break 'left_bounds;
-                } else if total > invalid {
-                    // Since there are no negative numbers, stop the search when the numbers become
-                    // too big.
-                    continue 'left_bounds;
+                match total.cmp(&invalid) {
+                    Ordering::Equal => {
+                        let result = min + max;
+                        println!("Part 2: {}", result);
+                        return;
+                    }
+                    Ordering::Less => {}
+                    Ordering::Greater => {
+                        // Since there are no negative numbers, stop the search when the numbers become
+                        // too big.
+                        continue 'left_bounds;
+                    }
                 }
             }
         }
