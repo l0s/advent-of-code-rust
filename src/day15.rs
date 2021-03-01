@@ -1,20 +1,24 @@
 // https://adventofcode.com/2020/day/15
 
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::hash::BuildHasherDefault;
+
+use hashers::fx_hash::FxHasher;
 
 use crate::get_lines;
 
 /// Parse the puzzle input
 ///
 /// *Panics* if any of the input numbers are not valid 32-bit unsigned integers
-pub fn parse_numbers() -> Vec<u32> {
+pub fn parse_numbers() -> Vec<usize> {
     get_lines("/input/day-15-input.txt")
         .flat_map(|line| {
             line.split(',')
                 .map(|slice| slice.to_owned())
                 .collect::<Vec<String>>()
         })
-        .map(|string| string.parse::<u32>())
+        .map(|string| string.parse::<usize>())
         .map(|result| result.expect("Invalid number"))
         .collect()
 }
@@ -26,15 +30,16 @@ pub fn parse_numbers() -> Vec<u32> {
 ///                  number.
 ///
 /// Returns: The last number spoken after the specified number of turns/rounds.
-pub fn get_last_number_spoken(num_rounds: usize) -> u32 {
+pub fn get_last_number_spoken(num_rounds: usize) -> usize {
     let numbers = parse_numbers();
     let (oral_history, last_number_spoken) = numbers.iter().enumerate().fold(
-        (HashMap::new(), 0u32),
-        |state, (index, number)| -> (HashMap<u32, Vec<usize>>, u32) {
+        (
+            HashMap::with_hasher(BuildHasherDefault::<FxHasher>::default()),
+            0usize,
+        ),
+        |state, (index, number)| -> (HashMap<usize, usize, _>, usize) {
             let mut oral_history = state.0;
-            let history = oral_history.entry(*number).or_insert_with(|| vec![index]);
-            history.insert(0, index);
-            history.truncate(2);
+            oral_history.insert(*number, index + 1);
 
             (oral_history, *number)
         },
@@ -43,45 +48,22 @@ pub fn get_last_number_spoken(num_rounds: usize) -> u32 {
     (numbers.len()..num_rounds)
         .fold(
             (oral_history, last_number_spoken),
-            |state, i| -> (HashMap<u32, Vec<usize>>, u32) {
+            |state, i| -> (HashMap<usize, usize, _>, usize) {
                 let mut oral_history = state.0;
-                let mut last_number_spoken = state.1;
+                let last_number_spoken = state.1;
 
-                let history = oral_history
-                    .get(&last_number_spoken)
-                    .expect("Number should have been spoken before.");
-                last_number_spoken = match history.len() {
-                    0 => panic!("Missing history for {}", last_number_spoken),
-                    1 => {
-                        // spoken only once before
-                        // "If that was the first time the number has been spoken, the current player says
-                        // 0."
-                        let number_to_speak = 0u32;
-                        let history = oral_history
-                            .get_mut(&number_to_speak)
-                            .expect("Missing mapping");
-                        history.insert(0, i);
-                        history.truncate(2);
-
-                        number_to_speak
+                let next_number_to_speak = match oral_history.entry(last_number_spoken) {
+                    Entry::Occupied(mut entry) => {
+                        let last_mention = entry.insert(i);
+                        i - last_mention
                     }
-                    _ => {
-                        // spoken 2+ times before
-                        // "Otherwise, the number had been spoken before; the current player announces how
-                        // many turns apart the number is from when it was previously spoken."
-                        let last_mention = history[0] as u32;
-                        let penultimate_mention = history[1] as u32;
-                        let number_to_speak = last_mention - penultimate_mention;
-                        let history = oral_history
-                            .entry(number_to_speak)
-                            .or_insert_with(|| vec![i]);
-                        history.insert(0, i);
-                        history.truncate(2);
-
-                        number_to_speak
+                    Entry::Vacant(entry) => {
+                        entry.insert(i);
+                        0usize
                     }
                 };
-                (oral_history, last_number_spoken)
+
+                (oral_history, next_number_to_speak)
             },
         )
         .1
@@ -101,7 +83,6 @@ mod tests {
 
     #[test]
     fn part2() {
-        // FIXME this takes an unusually long time
         // "Impressed, the Elves issue you a challenge: determine the 30,000,000th number spoken."
         let num_rounds = 30_000_000usize;
         let last_number_spoken = get_last_number_spoken(num_rounds);
