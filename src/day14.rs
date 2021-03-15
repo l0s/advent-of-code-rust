@@ -216,7 +216,7 @@ impl FromStr for Command {
 
 /// Parse the puzzle input
 pub fn parse_initialisation_programme() -> impl Iterator<Item = Command> {
-    get_lines("/input/day-14-input.txt")
+    get_lines("day-14-input.txt")
         .map(|line| line.parse::<Command>())
         .map(|result| result.expect("Unparseable line"))
 }

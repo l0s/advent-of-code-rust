@@ -12,7 +12,7 @@ use crate::get_lines;
 ///
 /// "Always prepared, you make a list of all of the joltage adapters in your bag."
 pub fn get_joltage_adapters() -> Vec<u8> {
-    let mut adapters = get_lines("/input/day-10-input.txt")
+    let mut adapters = get_lines("day-10-input.txt")
         .map(|line| line.parse())
         .map(|result| result.unwrap()) // panic on invalid joltage
         .collect::<Vec<u8>>();

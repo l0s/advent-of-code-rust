@@ -114,7 +114,7 @@ impl FromStr for Instruction {
 }
 
 pub fn get_instructions() -> Vec<Instruction> {
-    get_lines("/input/day-8-input.txt")
+    get_lines("day-8-input.txt")
         .flat_map(|line| line.parse())
         .collect()
 }

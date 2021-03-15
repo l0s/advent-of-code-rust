@@ -35,7 +35,7 @@ impl FromStr for Position {
 
 /// "The seat layout fits neatly on a grid."
 pub fn read_seat_layout() -> Vec<Vec<Position>> {
-    get_lines("/input/day-11-input.txt")
+    get_lines("day-11-input.txt")
         .map(|line| -> Vec<Position> {
             line.graphemes(true)
                 .map(|grapheme| Position::from_str(grapheme))

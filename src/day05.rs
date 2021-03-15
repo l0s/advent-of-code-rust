@@ -1,7 +1,7 @@
 use crate::get_lines;
 
 fn get_input() -> impl Iterator<Item = String> {
-    get_lines("/input/day-5-input.txt")
+    get_lines("day-5-input.txt")
 }
 
 pub fn get_sorted_seat_ids() -> Vec<u16> {

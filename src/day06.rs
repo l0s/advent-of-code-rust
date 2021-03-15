@@ -1,7 +1,7 @@
 use crate::get_block_strings;
 
 pub fn get_input() -> impl Iterator<Item = Vec<String>> {
-    get_block_strings("/input/day-6-input.txt").map(|string| {
+    get_block_strings("day-6-input.txt").map(|string| {
         string
             .split_whitespace()
             .map(|str| str.trim().to_owned())

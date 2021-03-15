@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::get_block_strings;
 
 fn get_input() -> impl Iterator<Item = String> {
-    get_block_strings("/input/day-4-input.txt")
+    get_block_strings("day-4-input.txt")
 }
 
 pub fn get_blocks() -> impl Iterator<Item = HashMap<String, String>> {

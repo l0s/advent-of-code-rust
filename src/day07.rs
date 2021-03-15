@@ -9,7 +9,7 @@ use crate::day07::ParseError::{
 use crate::get_lines;
 
 pub fn get_input() -> HashMap<String, Rule> {
-    get_lines("/input/day-7-input.txt")
+    get_lines("day-7-input.txt")
         .map(|sentence| sentence.parse::<Rule>())
         .flatten() // FIXME return Err if _any_ sentence cannot be parsed
         .map(|rule| (rule.container_colour.to_owned(), rule))

@@ -3,7 +3,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::get_lines;
 
 pub fn get_input() -> impl Iterator<Item = String> {
-    get_lines("/input/day-2-input.txt")
+    get_lines("day-2-input.txt")
 }
 
 trait Entry {
@@ -104,6 +104,6 @@ mod tests {
             .map(TobogganEntry::build)
             .filter(TobogganEntry::is_valid)
             .count();
-        println!("Part 1: {}", count);
+        println!("Part 2: {}", count);
     }
 }

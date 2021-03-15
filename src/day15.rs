@@ -12,7 +12,7 @@ use crate::get_lines;
 ///
 /// *Panics* if any of the input numbers are not valid array indices
 pub fn parse_numbers() -> Vec<usize> {
-    get_lines("/input/day-15-input.txt")
+    get_lines("day-15-input.txt")
         .flat_map(|line| {
             line.split(',')
                 .map(|slice| slice.to_owned())
@@ -41,7 +41,6 @@ pub struct VanEckSequence<S: BuildHasher = RandomState> {
 }
 
 impl<S: BuildHasher> VanEckSequence<S> {
-
     /// Create a new sequence
     ///
     /// Parameters:
@@ -55,7 +54,6 @@ impl<S: BuildHasher> VanEckSequence<S> {
             last_number_spoken: 0usize,
         }
     }
-
 }
 
 impl VanEckSequence<BuildHasherDefault<FxHasher>> {
@@ -64,8 +62,10 @@ impl VanEckSequence<BuildHasherDefault<FxHasher>> {
     /// Parameters:
     /// - `seed` - the first items in the sequence.
     pub fn new(seed: Vec<usize>) -> VanEckSequence<BuildHasherDefault<FxHasher>> {
-        VanEckSequence::with_cache(seed,
-                                   HashMap::with_hasher(BuildHasherDefault::<FxHasher>::default()))
+        VanEckSequence::with_cache(
+            seed,
+            HashMap::with_hasher(BuildHasherDefault::<FxHasher>::default()),
+        )
     }
 }
 
@@ -75,7 +75,8 @@ impl<S: BuildHasher> Iterator for VanEckSequence<S> {
     fn next(&mut self) -> Option<Self::Item> {
         let next_number_to_speak = if self.index < self.seed.len() {
             let next_number_to_speak = self.seed[self.index];
-            self.oral_history.insert(next_number_to_speak, self.index + 1);
+            self.oral_history
+                .insert(next_number_to_speak, self.index + 1);
             next_number_to_speak
         } else {
             match self.oral_history.entry(self.last_number_spoken) {

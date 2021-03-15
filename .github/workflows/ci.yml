@@ -16,11 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Lint
-      run: cargo clippy --all-targets --all-features -- -D warnings
     - name: Build
       run: cargo build --verbose
-    #- name: Run tests
-      # Disable tests for now because they depend on puzzle input
-      #run: cargo test --verbose
-
+    - name: Lint
+      run: cargo clippy --all-targets --all-features -- -D warnings
+    - name: Run tests
+      run: cargo test --verbose

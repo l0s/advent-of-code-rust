@@ -147,7 +147,7 @@ fn parse_buses(earliest_departure: u32, string: String) -> Vec<Result<BusCandida
 /// - `Ok` - All of the bus candidates given the passenger's earliest departure time
 /// - `Err(ParseError)` - The first parsing error encountered.
 pub fn parse_input() -> Result<Vec<BusCandidate>, ParseError> {
-    let mut lines = get_lines("/input/day-13-input.txt");
+    let mut lines = get_lines("day-13-input.txt");
     let earliest_departure = match lines.next() {
         None => return Err(EarliestDepartureNotSpecified),
         Some(line) => match line.parse::<u32>() {

@@ -18,16 +18,43 @@ pub mod day14;
 pub mod day15;
 
 use crate::BufReadResult::{BufferingError, EndOfBlock, EndOfInput, PartialBlock};
+use serde_derive::Deserialize;
+use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-pub fn get_lines(file: &str) -> impl Iterator<Item = String> {
+#[derive(Deserialize)]
+struct Config {
+    /// The directory that contains the problem input files
+    /// It should be relative to the directory specified by the `CARGO_MANIFEST_DIR` environment
+    /// variable.
+    input_directory: Option<String>,
+}
+
+fn new_reader(file: &str) -> BufReader<File> {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let file_name = String::from(manifest_dir) + file;
-    let path = Path::new(&file_name);
-    let file = File::open(path).expect("file not found"); // FIXME should let the client decide whether or not to panic
-    let reader = BufReader::new(file);
+    let input_directory =
+        match fs::read_to_string(Path::new(&format!("{}/config.toml", manifest_dir))) {
+            Ok(string) => {
+                let result: Result<Config, toml::de::Error> = toml::from_str(&string);
+                match result {
+                    Ok(config) => match config.input_directory {
+                        Some(input_directory) => input_directory,
+                        None => String::from("sample"),
+                    },
+                    Err(_) => String::from("sample"),
+                }
+            }
+            Err(_) => String::from("sample"),
+        };
+    let file =
+        File::open(Path::new(&format!("{}/{}", input_directory, file))).expect("file not found"); // FIXME should let the client decide whether or not to panic
+    BufReader::new(file)
+}
+
+pub fn get_lines(file: &str) -> impl Iterator<Item = String> {
+    let reader = new_reader(file);
     reader.lines().map(Result::unwrap)
 }
 
@@ -131,10 +158,6 @@ impl<R: BufRead> Iterator for Blocks<R> {
 }
 
 pub fn get_block_strings(file: &str) -> impl Iterator<Item = String> {
-    let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let file_name = String::from(manifest_dir) + file;
-    let path = Path::new(&file_name);
-    let file = File::open(path).expect("file not found");
-    let reader = BufReader::new(file);
+    let reader = new_reader(file);
     Blocks { reader }
 }

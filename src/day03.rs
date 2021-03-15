@@ -1,7 +1,7 @@
 use crate::get_lines;
 
 fn get_input() -> impl Iterator<Item = String> {
-    get_lines("/input/day-3-input.txt")
+    get_lines("day-3-input.txt")
 }
 
 /// A map of the trees in the area

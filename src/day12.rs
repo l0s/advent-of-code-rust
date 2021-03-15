@@ -318,7 +318,7 @@ impl NavigationInstruction {
 }
 
 pub fn get_instructions() -> impl Iterator<Item = Result<NavigationInstruction, String>> {
-    get_lines("/input/day-12-input.txt")
+    get_lines("day-12-input.txt")
         .map(|line| line.parse::<NavigationInstruction>())
         .map(|parse_result| parse_result.map_err(|error| error.to_string()))
 }
