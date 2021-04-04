@@ -16,6 +16,7 @@ pub mod day12;
 pub mod day13;
 pub mod day14;
 pub mod day15;
+pub mod day16;
 
 use crate::BufReadResult::{BufferingError, EndOfBlock, EndOfInput, PartialBlock};
 use serde_derive::Deserialize;

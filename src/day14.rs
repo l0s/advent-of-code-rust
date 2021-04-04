@@ -154,7 +154,7 @@ fn to_int(chars: Vec<char>) -> u64 {
         match bit {
             '0' => result,
             '1' => result | (1u64 << i),
-            _ => panic!(format!("Invalid bit: {}", bit)),
+            _ => panic!("Invalid bit: {}", bit),
         }
     })
 }
