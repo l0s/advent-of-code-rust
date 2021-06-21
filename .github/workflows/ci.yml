@@ -16,6 +16,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          target/
+        key: cargo-${{ runner.os }}-${{ hashFiles( '**/Cargo.lock' ) }}
+        restore-keys: |
+          cargo-${{ runner.os }}-
+          cargo-
     - name: Build
       run: cargo build --verbose
     - name: Lint
