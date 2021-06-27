@@ -2,7 +2,9 @@
 // https://adventofcode.com/2020/day/17
 
 use std::cmp;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{HashMap, HashSet};
+
+use rayon::prelude::*;
 
 use crate::get_lines;
 
@@ -94,12 +96,12 @@ pub struct SpatialGrid {
     x_bounds: Bounds,
     y_bounds: Bounds,
     z_bounds: Bounds,
-    map: BTreeMap<Int, BTreeMap<Int, HashSet<Int>>>,
+    map: HashMap<Int, HashMap<Int, HashSet<Int>>>,
 }
 
 impl SpatialGrid {
     pub fn new(known_cubes: Vec<SpatialCoordinate>) -> SpatialGrid {
-        let mut map = BTreeMap::new();
+        let mut map = HashMap::new();
         let mut x_min: Int = 0;
         let mut x_max: Int = 0;
         let mut y_min: Int = 0;
@@ -108,10 +110,8 @@ impl SpatialGrid {
         let mut z_max: Int = 0;
 
         for coordinate in known_cubes {
-            let x_dimension = map.entry(coordinate.x).or_insert_with(BTreeMap::new);
-            let y_dimension = x_dimension
-                .entry(coordinate.y)
-                .or_insert_with(HashSet::new);
+            let x_dimension = map.entry(coordinate.x).or_insert_with(HashMap::new);
+            let y_dimension = x_dimension.entry(coordinate.y).or_insert_with(HashSet::new);
             y_dimension.insert(coordinate.z);
 
             x_min = cmp::min(x_min, coordinate.x);
@@ -162,17 +162,22 @@ impl SpatialGrid {
     /// Returns: a new Grid based on the evaluation of the current state
     pub fn cycle(&self) -> SpatialGrid {
         let known_cubes = (&self.x_bounds.lower - 1..=&self.x_bounds.upper + 1)
+            .into_par_iter()
             .flat_map(move |x| {
-                (&self.y_bounds.lower - 1..=&self.y_bounds.upper + 1).flat_map(move |y| {
-                    (&self.z_bounds.lower - 1..=&self.z_bounds.upper + 1).flat_map(move |z| {
-                        let coordinate = SpatialCoordinate { x, y, z };
-                        if self.cycle_cube(&coordinate) {
-                            Some(coordinate)
-                        } else {
-                            None
-                        }
+                (&self.y_bounds.lower - 1..=&self.y_bounds.upper + 1)
+                    .into_par_iter()
+                    .flat_map(move |y| {
+                        (&self.z_bounds.lower - 1..=&self.z_bounds.upper + 1)
+                            .into_par_iter()
+                            .flat_map(move |z| {
+                                let coordinate = SpatialCoordinate { x, y, z };
+                                if self.cycle_cube(&coordinate) {
+                                    Some(coordinate)
+                                } else {
+                                    None
+                                }
+                            })
                     })
-                })
             })
             .collect::<Vec<SpatialCoordinate>>();
         SpatialGrid::new(known_cubes)
@@ -208,12 +213,12 @@ pub struct SpaceTimeGrid {
     z_bounds: Bounds,
     w_bounds: Bounds,
 
-    map: BTreeMap<Int, BTreeMap<Int, BTreeMap<Int, HashSet<Int>>>>,
+    map: HashMap<Int, HashMap<Int, HashMap<Int, HashSet<Int>>>>,
 }
 
 impl SpaceTimeGrid {
     pub fn new(known_cubes: Vec<SpaceTimeCoordinate>) -> SpaceTimeGrid {
-        let mut map = BTreeMap::new();
+        let mut map = HashMap::new();
         let mut x_min: Int = 0;
         let mut x_max: Int = 0;
         let mut y_min: Int = 0;
@@ -224,13 +229,9 @@ impl SpaceTimeGrid {
         let mut w_max: Int = 0;
 
         for coordinate in known_cubes {
-            let x_dimension = map.entry(coordinate.x).or_insert_with(BTreeMap::new);
-            let y_dimension = x_dimension
-                .entry(coordinate.y)
-                .or_insert_with(BTreeMap::new);
-            let z_dimension = y_dimension
-                .entry(coordinate.z)
-                .or_insert_with(HashSet::new);
+            let x_dimension = map.entry(coordinate.x).or_insert_with(HashMap::new);
+            let y_dimension = x_dimension.entry(coordinate.y).or_insert_with(HashMap::new);
+            let z_dimension = y_dimension.entry(coordinate.z).or_insert_with(HashSet::new);
             z_dimension.insert(coordinate.w);
 
             x_min = cmp::min(x_min, coordinate.x);
@@ -294,19 +295,26 @@ impl SpaceTimeGrid {
     /// Returns: a new Grid based on the evaluation of the current state
     pub fn cycle(&self) -> SpaceTimeGrid {
         let known_cubes = (&self.x_bounds.lower - 1..=&self.x_bounds.upper + 1)
+            .into_par_iter()
             .flat_map(move |x| {
-                (&self.y_bounds.lower - 1..=&self.y_bounds.upper + 1).flat_map(move |y| {
-                    (&self.z_bounds.lower - 1..=&self.z_bounds.upper + 1).flat_map(move |z| {
-                        (&self.w_bounds.lower - 1..=&self.w_bounds.upper + 1).flat_map(move |w| {
-                            let coordinate = SpaceTimeCoordinate { x, y, z, w };
-                            if self.cycle_cube(&coordinate) {
-                                Some(coordinate)
-                            } else {
-                                None
-                            }
-                        })
+                (&self.y_bounds.lower - 1..=&self.y_bounds.upper + 1)
+                    .into_par_iter()
+                    .flat_map(move |y| {
+                        (&self.z_bounds.lower - 1..=&self.z_bounds.upper + 1)
+                            .into_par_iter()
+                            .flat_map(move |z| {
+                                (&self.w_bounds.lower - 1..=&self.w_bounds.upper + 1)
+                                    .into_par_iter()
+                                    .flat_map(move |w| {
+                                        let coordinate = SpaceTimeCoordinate { x, y, z, w };
+                                        if self.cycle_cube(&coordinate) {
+                                            Some(coordinate)
+                                        } else {
+                                            None
+                                        }
+                                    })
+                            })
                     })
-                })
             })
             .collect::<Vec<SpaceTimeCoordinate>>();
         SpaceTimeGrid::new(known_cubes)
