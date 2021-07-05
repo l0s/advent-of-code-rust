@@ -7,14 +7,14 @@ use std::str::FromStr;
 use crate::day19::Rule::{MatchAll, MatchAnySet, MatchSingleCharacter};
 use crate::get_lines;
 
-enum Rule {
+pub enum Rule {
     MatchSingleCharacter(char),
     MatchAll(Vec<usize>),
     MatchAnySet(Vec<Vec<usize>>),
 }
 
 impl Rule {
-    fn all_permutations(&self, rules: &HashMap<usize, Rule>) -> HashSet<String> { // TODO could probably use a Trie
+    pub fn all_permutations(&self, rules: &HashMap<usize, Rule>) -> HashSet<String> { // TODO could probably use a Trie
         match self {
             MatchSingleCharacter(c) => vec![format!("{}", c)]
                 .iter()
@@ -54,9 +54,9 @@ impl FromStr for Rule {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with("\"") {
-            let c = s.strip_prefix("\"")
-                .map(|s| s.strip_suffix("\""))
+        if s.starts_with('"') {
+            let c = s.strip_prefix('"')
+                .map(|s| s.strip_suffix('"'))
                 .flatten()
                 .map(|s| -> Option<char> {
                     if s.len() != 1 {
@@ -70,14 +70,14 @@ impl FromStr for Rule {
         } else if s.contains(" | ") {
             let potential_rule_sets = s.split(" | ")
                 .map(|section| section.trim()
-                    .split(" ")
+                    .split(' ')
                     .map(|c| c.parse::<usize>().expect(&*format!("Invalid rule ID: {}", c))) // TODO return error
                     .collect::<Vec<usize>>())
                 .collect();
             Ok(MatchAnySet(potential_rule_sets))
         } else {
             let rule_ids = s.trim()
-                .split(" ")
+                .split(' ')
                 .map(|c| c.parse::<usize>().unwrap()) // TODO return error
                 .collect::<Vec<usize>>();
             Ok(MatchAll(rule_ids))
@@ -107,7 +107,7 @@ fn parse_rule(string: &str) -> (usize, Rule) {
 /// Returns
 /// - the rules that valid messages should obey
 /// - the received messages
-fn get_input() -> (HashMap<usize, Rule>, Vec<String>) {
+pub fn get_input() -> (HashMap<usize, Rule>, Vec<String>) {
     let mut rules = HashMap::new();
     let mut messages = vec![];
     let mut section = 0;
