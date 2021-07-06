@@ -19,7 +19,7 @@ impl Rule {
         prefixes.insert(message);
         self.matching_suffixes(&prefixes, rules)
             .iter()
-            .filter(|suffix| suffix.is_empty()).next().is_some()
+            .any(|suffix| suffix.is_empty())
     }
 
     fn matching_suffixes(&self, prefixes: &HashSet<String>, rules: &HashMap<usize, Rule>) -> HashSet<String> { // TODO BTreeSet or Trie?
