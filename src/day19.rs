@@ -31,7 +31,7 @@ impl Rule {
     /// Parameters:
     /// - `message` - the message to evaluate
     /// - `rules` - a dictionary of rule ID to rule
-    /// Returns: true if and only if the message mathces this rule in its entirety with no remaining
+    /// Returns: true if and only if the message matches this rule in its entirety with no remaining
     ///          characters.
     pub fn matches(&self, message: String, rules: &HashMap<usize, Rule>) -> bool {
         let mut prefixes = HashSet::new();
@@ -62,7 +62,6 @@ impl Rule {
         messages: &HashSet<String>,
         rules: &HashMap<usize, Rule>,
     ) -> HashSet<String> {
-        // TODO BTreeSet or Trie?
         match self {
             MatchSingleCharacter(c) => messages
                 .iter()
