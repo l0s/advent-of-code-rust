@@ -14,37 +14,52 @@ pub enum Rule {
 }
 
 impl Rule {
-    pub fn all_permutations(&self, rules: &HashMap<usize, Rule>) -> HashSet<String> { // TODO could probably use a Trie
+    pub fn matches(&self, message: String, rules: &HashMap<usize, Rule>) -> bool {
+        let mut prefixes = HashSet::new();
+        prefixes.insert(message);
+        self.matching_suffixes(&prefixes, rules)
+            .iter()
+            .filter(|suffix| suffix.is_empty()).next().is_some()
+    }
+
+    fn matching_suffixes(&self, prefixes: &HashSet<String>, rules: &HashMap<usize, Rule>) -> HashSet<String> { // TODO BTreeSet or Trie?
         match self {
-            MatchSingleCharacter(c) => vec![format!("{}", c)]
-                .iter()
-                .map(String::to_owned)
-                .collect::<HashSet<String>>(),
-            MatchAll(ids) => {
-                let mut prefixes: HashSet<String> = HashSet::new();
-                prefixes.insert(String::from(""));
-                for id in ids {
-                    let rule = rules.get(id).unwrap();
-                    let sub_permutations = rule.all_permutations(rules);
-                    let mut result = HashSet::new();
-                    for prefix in prefixes {
-                        for sub_permutation in &sub_permutations {
-                            result.insert(format!("{}{}", prefix, sub_permutation));
+            MatchSingleCharacter(c) => {
+                prefixes.iter()
+                    .flat_map(|prefix| -> HashSet<String> {
+                        let mut result = HashSet::new();
+                        if prefix.starts_with(|first| first == *c) {
+                            let (_, suffix) = prefix.split_at(1);
+                            result.insert(String::from(suffix));
                         }
-                    }
-                    prefixes = result;
-                }
-                prefixes
+                        result
+                    }).collect()
             }
-            MatchAnySet(rule_sets) => {
-                let mut result = HashSet::new();
-                for set in rule_sets {
-                    let rule = MatchAll(set.to_owned());
-                    for sub in rule.all_permutations(rules) {
-                        result.insert(sub);
-                    }
-                }
-                result
+            MatchAll(ids) => {
+                prefixes.iter()
+                    .flat_map(|prefix| -> HashSet<String> {
+                        let mut result = HashSet::new();
+                        result.insert(prefix.to_owned());
+                        for id in ids {
+                            let rule = rules.get(id).unwrap();
+                            let suffixes = rule.matching_suffixes(&result, rules);
+                            result = suffixes;
+                            if result.is_empty() {
+                                break;
+                            }
+                        }
+                        result
+                    }).collect()
+            }
+            MatchAnySet(id_sets) => {
+                prefixes.iter()
+                    .flat_map(|prefix| -> HashSet<String> {
+                        id_sets.iter().flat_map(|set| -> HashSet<String> {
+                            let mut result = HashSet::new();
+                            result.insert(prefix.to_owned());
+                            MatchAll(set.to_owned()).matching_suffixes(&result, rules)
+                        }).collect()
+                    }).collect()
             }
         }
     }
@@ -132,19 +147,27 @@ pub fn get_input() -> (HashMap<usize, Rule>, Vec<String>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::day19::get_input;
+    use crate::day19::{get_input, Rule};
 
     #[test]
     fn part1() {
         let (rules, messages) = get_input();
         let rule = rules.get(&0usize).unwrap();
-        let permutations = rule.all_permutations(&rules);
         let count = messages.iter()
-            .filter(|message| permutations.contains(*message))
+            .filter(|message| rule.matches(message.to_owned().to_owned(), &rules))
             .count();
         println!("Part 1: {}", count);
     }
 
     #[test]
-    fn part2() {}
+    fn part2() {
+        let (mut rules, messages) = get_input();
+        rules.insert(8, "42 | 42 8".parse::<Rule>().unwrap());
+        rules.insert(11, "42 31 | 42 11 31".parse::<Rule>().unwrap());
+        let rule = rules.get(&0usize).unwrap();
+        let count = messages.iter()
+            .filter(|message| rule.matches(message.to_owned().to_owned(), &rules))
+            .count();
+        println!("Part 2: {}", count);
+    }
 }
