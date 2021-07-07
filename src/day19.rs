@@ -25,7 +25,7 @@ pub enum Rule {
     MatchAnySet(Vec<Vec<usize>>), // FIXME outer container does not need to be ordered
 }
 
-impl Rule {
+impl<'a> Rule {
     /// Determine if a message matches this rule exactly
     ///
     /// Parameters:
@@ -33,7 +33,7 @@ impl Rule {
     /// - `rules` - a dictionary of rule ID to rule
     /// Returns: true if and only if the message matches this rule in its entirety with no remaining
     ///          characters.
-    pub fn matches(&self, message: String, rules: &HashMap<usize, Rule>) -> bool {
+    pub fn matches(&self, message: &'a str, rules: &HashMap<usize, Rule>) -> bool {
         let mut prefixes = HashSet::new();
         prefixes.insert(message);
         self.matching_suffixes(&prefixes, rules)
@@ -59,26 +59,25 @@ impl Rule {
     ///          and the entry represents the remaining portion.
     fn matching_suffixes(
         &self,
-        messages: &HashSet<String>,
+        messages: &HashSet<&'a str>,
         rules: &HashMap<usize, Rule>,
-    ) -> HashSet<String> {
+    ) -> HashSet<&'a str> {
         match self {
             MatchSingleCharacter(c) => messages
                 .iter()
-                .flat_map(|prefix| -> HashSet<String> {
+                .flat_map(|prefix| -> HashSet<&'a str> {
                     let mut result = HashSet::new();
-                    if prefix.starts_with(|first| first == *c) {
-                        let (_, suffix) = prefix.split_at(1);
-                        result.insert(String::from(suffix));
+                    if prefix.starts_with(*c) {
+                        result.insert(&prefix[1..prefix.len()]);
                     }
                     result
                 })
                 .collect(),
             MatchAll(ids) => messages
                 .iter()
-                .flat_map(|prefix| -> HashSet<String> {
+                .flat_map(|prefix| -> HashSet<&'a str> {
                     let mut result = HashSet::new();
-                    result.insert(prefix.to_owned());
+                    result.insert(*prefix);
                     for id in ids {
                         let rule = rules.get(id).unwrap();
                         let suffixes = rule.matching_suffixes(&result, rules);
@@ -92,12 +91,12 @@ impl Rule {
                 .collect(),
             MatchAnySet(id_sets) => messages
                 .iter()
-                .flat_map(|prefix| -> HashSet<String> {
+                .flat_map(|prefix| -> HashSet<&'a str> {
                     id_sets
                         .iter()
-                        .flat_map(|set| -> HashSet<String> {
+                        .flat_map(|set| -> HashSet<&'a str> {
                             let mut result = HashSet::new();
-                            result.insert(prefix.to_owned());
+                            result.insert(*prefix);
                             MatchAll(set.to_owned()).matching_suffixes(&result, rules)
                         })
                         .collect()
@@ -123,7 +122,7 @@ impl FromStr for Rule {
                     s.chars().next()
                 })
                 .flatten()
-                .expect(&*format!("Error parsing character: {}", s)); // TODO return error
+                .expect(&*format!("Error parsing character: {}", s));
             Ok(MatchSingleCharacter(c))
         } else if s.contains(" | ") {
             let potential_rule_sets = s
@@ -135,7 +134,7 @@ impl FromStr for Rule {
                         .map(|c| {
                             c.parse::<usize>()
                                 .expect(&*format!("Invalid rule ID: {}", c))
-                        }) // TODO return error
+                        })
                         .collect::<Vec<usize>>()
                 })
                 .collect();
@@ -144,7 +143,7 @@ impl FromStr for Rule {
             let rule_ids = s
                 .trim()
                 .split(' ')
-                .map(|c| c.parse::<usize>().unwrap()) // TODO return error
+                .map(|c| c.parse::<usize>().unwrap())
                 .collect::<Vec<usize>>();
             Ok(MatchAll(rule_ids))
         }
@@ -188,9 +187,7 @@ pub fn get_input() -> (HashMap<usize, Rule>, Vec<String>) {
         if section == 0 {
             let (id, rule) = parse_rule(&*line);
             rules.insert(id, rule);
-            // eprintln!("-- rule: {}", rule.to_string());
         } else if section == 1 {
-            // eprintln!("-- message: {}", line.to_string());
             messages.push(line);
         } else {
             panic!("Unexpected section");
@@ -209,7 +206,7 @@ mod tests {
         let rule = rules.get(&0usize).unwrap();
         let count = messages
             .iter()
-            .filter(|message| rule.matches(message.to_owned().to_owned(), &rules))
+            .filter(|message| rule.matches(message, &rules))
             .count();
         println!("Part 1: {}", count);
     }
@@ -222,7 +219,7 @@ mod tests {
         let rule = rules.get(&0usize).unwrap();
         let count = messages
             .iter()
-            .filter(|message| rule.matches(message.to_owned().to_owned(), &rules))
+            .filter(|message| rule.matches(message, &rules))
             .count();
         println!("Part 2: {}", count);
     }
