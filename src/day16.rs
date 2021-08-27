@@ -216,7 +216,7 @@ mod tests {
                     let number = ticket.numbers[*field_index];
                     for potential_field in &candidates {
                         if !potential_field.contains(number) {
-                            to_remove.insert(&potential_field);
+                            to_remove.insert(potential_field);
                         }
                     }
                     for disqualified in &to_remove {

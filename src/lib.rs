@@ -108,7 +108,7 @@ impl<R: BufRead> Blocks<R> {
                     }
                     previous = current;
                 }
-                PartialBlock(&buffer)
+                PartialBlock(buffer)
             }
             Err(error) => BufferingError(error),
         };
