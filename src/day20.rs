@@ -28,14 +28,19 @@ impl Tile {
             pixels: self.pixels.clone(),
         };
         let r90 = original.rotate90();
-        vec![original.flip_horizontally(), original.flip_vertically(),
-             original.rotate180(), original.rotate270(),
-             r90.flip_horizontally(), r90.flip_vertically(), r90,
-             /* these are redundant:
-             original.rotate180().flip_horizontally(), original.rotate180().flip_vertically(),
-             original.rotate270().flip_horizontally(), original.rotate270().flip_vertically(),
-             */
-             original,
+        vec![
+            original.flip_horizontally(),
+            original.flip_vertically(),
+            original.rotate180(),
+            original.rotate270(),
+            r90.flip_horizontally(),
+            r90.flip_vertically(),
+            r90,
+            /* these are redundant:
+            original.rotate180().flip_horizontally(), original.rotate180().flip_vertically(),
+            original.rotate270().flip_horizontally(), original.rotate270().flip_vertically(),
+            */
+            original,
         ]
     }
 }
@@ -47,13 +52,16 @@ pub struct OrientedTile {
 
 impl Display for OrientedTile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:\n{}", self.id, self.pixels
-            .iter()
-            .map(|row| row.iter()
-                .cloned()
-                .collect::<String>())
-            .collect::<Vec<String>>()
-            .join("\n"))
+        write!(
+            f,
+            "{}:\n{}",
+            self.id,
+            self.pixels
+                .iter()
+                .map(|row| row.iter().cloned().collect::<String>())
+                .collect::<Vec<String>>()
+                .join("\n")
+        )
     }
 }
 
@@ -61,35 +69,35 @@ impl Clone for OrientedTile {
     fn clone(&self) -> Self {
         OrientedTile {
             id: self.id,
-            pixels: self.pixels
-                .iter()
-                .map(|row| row.to_vec())
-                .collect(),
+            pixels: self.pixels.iter().map(|row| row.to_vec()).collect(),
         }
     }
 }
 
 impl OrientedTile {
-
     const SEA_MONSTER: [[char; 20]; 3] = [
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ],
-        ['#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', ],
-        [' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ],
+        [
+            ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+            ' ', '#', ' ',
+        ],
+        [
+            '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ',
+            '#', '#', '#',
+        ],
+        [
+            ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#',
+            ' ', ' ', ' ',
+        ],
     ];
 
-    fn left_border(&self) -> Vec<char> { // TODO can we return Iterator instead of Vec?
-        self.pixels
-            .iter()
-            .map(|row| row[0])
-            .collect()
+    fn left_border(&self) -> Vec<char> {
+        // TODO can we return Iterator instead of Vec?
+        self.pixels.iter().map(|row| row[0]).collect()
     }
 
     fn right_border(&self) -> Vec<char> {
         let last_index = self.pixels.len() - 1;
-        self.pixels
-            .iter()
-            .map(|row| row[last_index])
-            .collect()
+        self.pixels.iter().map(|row| row[last_index]).collect()
     }
 
     fn top_border(&self) -> Vec<char> {
@@ -102,12 +110,10 @@ impl OrientedTile {
     }
 
     fn flip_horizontally(&self) -> Self {
-        let pixels = self.pixels
+        let pixels = self
+            .pixels
             .iter()
-            .map(|row| row.iter()
-                .cloned()
-                .rev()
-                .collect())
+            .map(|row| row.iter().cloned().rev().collect())
             .collect();
         OrientedTile {
             id: self.id,
@@ -118,11 +124,7 @@ impl OrientedTile {
     fn flip_vertically(&self) -> Self {
         OrientedTile {
             id: self.id,
-            pixels: self.pixels
-                .iter()
-                .rev()
-                .cloned()
-                .collect(),
+            pixels: self.pixels.iter().rev().cloned().collect(),
         }
     }
 
@@ -130,10 +132,12 @@ impl OrientedTile {
         OrientedTile {
             id: self.id,
             pixels: (0..self.pixels.len())
-                .map(|original_column| (0..self.pixels.len())
-                    .rev()
-                    .map(|original_row| self.pixels[original_row][original_column])
-                    .collect())
+                .map(|original_column| {
+                    (0..self.pixels.len())
+                        .rev()
+                        .map(|original_row| self.pixels[original_row][original_column])
+                        .collect()
+                })
                 .collect(),
         }
     }
@@ -141,10 +145,14 @@ impl OrientedTile {
     fn rotate180(&self) -> Self {
         OrientedTile {
             id: self.id,
-            pixels: (0..self.pixels.len()).rev()
-                .map(|original_row| (0..self.pixels.len()).rev()
-                    .map(|original_column| self.pixels[original_row][original_column])
-                    .collect())
+            pixels: (0..self.pixels.len())
+                .rev()
+                .map(|original_row| {
+                    (0..self.pixels.len())
+                        .rev()
+                        .map(|original_column| self.pixels[original_row][original_column])
+                        .collect()
+                })
                 .collect(),
         }
     }
@@ -152,10 +160,13 @@ impl OrientedTile {
     fn rotate270(&self) -> Self {
         OrientedTile {
             id: self.id,
-            pixels: (0..self.pixels.len()).rev()
-                .map(|original_column| (0..self.pixels.len())
-                    .map(|original_row| self.pixels[original_row][original_column])
-                    .collect())
+            pixels: (0..self.pixels.len())
+                .rev()
+                .map(|original_column| {
+                    (0..self.pixels.len())
+                        .map(|original_row| self.pixels[original_row][original_column])
+                        .collect()
+                })
                 .collect(),
         }
     }
@@ -179,7 +190,8 @@ impl OrientedTile {
     }
 
     /// Highlights sea monsters with 'O' and returns the total number of sea monsters identified
-    pub fn highlight_seamonsters(&mut self) -> usize { // TODO should I return boolean instead?
+    pub fn highlight_seamonsters(&mut self) -> usize {
+        // TODO should I return boolean instead?
         let window_height = OrientedTile::SEA_MONSTER.len();
         let window_width = OrientedTile::SEA_MONSTER[0].len();
         let vertical_windows = self.pixels.len() - window_height;
@@ -199,13 +211,12 @@ impl OrientedTile {
 
     fn highlight_seamonster(&mut self, vertical_offset: usize, horizontal_offset: usize) {
         for i in 0..OrientedTile::SEA_MONSTER.len() {
-            let pattern_row = OrientedTile::SEA_MONSTER[ i ];
+            let pattern_row = OrientedTile::SEA_MONSTER[i];
             let image_row = &mut self.pixels[i + vertical_offset];
             for j in 0..pattern_row.len() {
                 let pattern = pattern_row[j];
-                match pattern {
-                    '#' => image_row[j + horizontal_offset] = 'O',
-                    _ => {},
+                if pattern == '#' {
+                    image_row[j + horizontal_offset] = 'O';
                 }
             }
         }
@@ -213,12 +224,12 @@ impl OrientedTile {
 
     fn contains_sea_monster(&self, vertical_offset: usize, horizontal_offset: usize) -> bool {
         for i in 0..OrientedTile::SEA_MONSTER.len() {
-            let pattern_row = OrientedTile::SEA_MONSTER[ i ];
+            let pattern_row = OrientedTile::SEA_MONSTER[i];
             let image_row = &self.pixels[i + vertical_offset];
             for j in 0..pattern_row.len() {
                 let pattern = pattern_row[j];
                 // spaces can be anything
-                if pattern == '#' && image_row[ j + horizontal_offset ] != '#' {
+                if pattern == '#' && image_row[j + horizontal_offset] != '#' {
                     // only the '#' pixels need to match
                     return false;
                 }
@@ -246,7 +257,8 @@ impl OrientedTile {
     }
 }
 
-pub fn get_input() -> Vec<Tile> { // TODO can I return an Iterator?
+pub fn get_input() -> Vec<Tile> {
+    // TODO can I return an Iterator?
     let mut result = vec![];
     let mut id: Id = 0;
     let mut rows = vec![];
@@ -254,7 +266,8 @@ pub fn get_input() -> Vec<Tile> { // TODO can I return an Iterator?
         if line.starts_with("Tile") {
             let mut components = line.split(' ');
             components.next(); // "Tile"
-            id = components.next()
+            id = components
+                .next()
                 .and_then(|string| string.strip_suffix(':'))
                 .map(|string| string.parse::<Id>().unwrap())
                 .expect("Invalid tile ID");
@@ -271,9 +284,12 @@ pub fn get_input() -> Vec<Tile> { // TODO can I return an Iterator?
     result
 }
 
-pub fn get_valid_arrangements(partial_arrangement: Vec<OrientedTile>,
-                              remaining_tiles: Vec<Tile>,
-                              edge_length: usize) -> Vec<Vec<OrientedTile>> { // TODO can I return an Iterator instead?
+pub fn get_valid_arrangements(
+    partial_arrangement: Vec<OrientedTile>,
+    remaining_tiles: Vec<Tile>,
+    edge_length: usize,
+) -> Vec<Vec<OrientedTile>> {
+    // TODO can I return an Iterator instead?
     if remaining_tiles.is_empty() {
         return vec![partial_arrangement];
     } else if partial_arrangement.is_empty() {
@@ -288,8 +304,7 @@ pub fn get_valid_arrangements(partial_arrangement: Vec<OrientedTile>,
                 remaining.extend(left.iter().cloned());
                 remaining.extend(right.iter().cloned());
 
-                let valid_arrangements =
-                    get_valid_arrangements(partial, remaining, edge_length);
+                let valid_arrangements = get_valid_arrangements(partial, remaining, edge_length);
                 if !valid_arrangements.is_empty() {
                     // There are more valid arrangements, but we only need one
                     return valid_arrangements;
@@ -313,15 +328,18 @@ pub fn get_valid_arrangements(partial_arrangement: Vec<OrientedTile>,
             remaining.extend(left.iter().cloned());
             remaining.extend(right.iter().cloned());
 
-            let valid_arrangements =
-                get_valid_arrangements(partial, remaining, edge_length);
+            let valid_arrangements = get_valid_arrangements(partial, remaining, edge_length);
             prefixes.extend(valid_arrangements.iter().cloned());
         }
     }
     prefixes
 }
 
-fn tile_above(arrangement: &[OrientedTile], index: usize, edge_length: usize) -> Option<&OrientedTile> {
+fn tile_above(
+    arrangement: &[OrientedTile],
+    index: usize,
+    edge_length: usize,
+) -> Option<&OrientedTile> {
     if index < edge_length {
         None
     } else {
@@ -329,7 +347,11 @@ fn tile_above(arrangement: &[OrientedTile], index: usize, edge_length: usize) ->
     }
 }
 
-fn tile_to_left(arrangement: &[OrientedTile], index: usize, edge_length: usize) -> Option<&OrientedTile> {
+fn tile_to_left(
+    arrangement: &[OrientedTile],
+    index: usize,
+    edge_length: usize,
+) -> Option<&OrientedTile> {
     if index % edge_length == 0 {
         None
     } else {
@@ -337,13 +359,19 @@ fn tile_to_left(arrangement: &[OrientedTile], index: usize, edge_length: usize) 
     }
 }
 
-fn fits(arrangement: &[OrientedTile], candidate: &Tile, edge_length: usize) -> Option<OrientedTile> {
+fn fits(
+    arrangement: &[OrientedTile],
+    candidate: &Tile,
+    edge_length: usize,
+) -> Option<OrientedTile> {
     let new_index = arrangement.len();
     let tile_above = tile_above(arrangement, new_index, edge_length);
     let tile_to_left = tile_to_left(arrangement, new_index, edge_length);
     for orientation in candidate.permutations() {
-        let top_fits = tile_above.is_none() || tile_above.as_ref().unwrap().fits_above(&orientation);
-        let left_fits = tile_to_left.is_none() || tile_to_left.as_ref().unwrap().fits_to_left_of(&orientation);
+        let top_fits =
+            tile_above.is_none() || tile_above.as_ref().unwrap().fits_above(&orientation);
+        let left_fits =
+            tile_to_left.is_none() || tile_to_left.as_ref().unwrap().fits_to_left_of(&orientation);
         if top_fits && left_fits {
             return Some(orientation);
         }
@@ -351,7 +379,7 @@ fn fits(arrangement: &[OrientedTile], candidate: &Tile, edge_length: usize) -> O
     None
 }
 
-fn combine(arrangement: &[Tile], tiles_on_edge: usize, edge_size: usize) -> Tile {
+pub fn combine(arrangement: &[Tile], tiles_on_edge: usize, edge_size: usize) -> Tile {
     let mut grid: Vec<Vec<char>> = Vec::with_capacity(edge_size);
     for (index, tile) in arrangement.iter().enumerate() {
         let tile_row = index / tiles_on_edge;
@@ -380,20 +408,21 @@ fn combine(arrangement: &[Tile], tiles_on_edge: usize, edge_size: usize) -> Tile
 mod tests {
     use crate::day20::{combine, get_input, get_valid_arrangements, Tile};
 
-// TODO extract common code to pull arrangement once
+    // TODO extract common code to pull arrangement once
 
     #[test]
     fn part1() {
         let tiles = get_input();
         let edge_length = (tiles.len() as f32).sqrt() as usize;
         let possible_arrangements = get_valid_arrangements(vec![], tiles, edge_length);
-        assert!(possible_arrangements.len() >= 1);
+        assert!(!possible_arrangements.is_empty());
         let arrangement = possible_arrangements.get(0).unwrap();
         let top_left = arrangement.get(0).unwrap();
         let top_right = arrangement.get(edge_length - 1).unwrap();
         let bottom_left = arrangement.get(arrangement.len() - edge_length).unwrap();
         let bottom_right = arrangement.get(arrangement.len() - 1).unwrap();
-        let result: u64 = vec![top_left, top_right, bottom_left, bottom_right].iter()
+        let result: u64 = vec![top_left, top_right, bottom_left, bottom_right]
+            .iter()
             .map(|corner| corner.id)
             .product();
         println!("Part 1: {}", result);
@@ -405,25 +434,31 @@ mod tests {
         let tiles_on_edge = (tiles.len() as f32).sqrt() as usize;
         let edge_size = tiles.get(0).unwrap().pixels.len();
         let possible_arrangements = get_valid_arrangements(vec![], tiles, tiles_on_edge);
-        assert!(possible_arrangements.len() >= 1);
+        assert!(!possible_arrangements.is_empty());
         let arrangement = possible_arrangements.get(0).unwrap();
 
-        let cropped_tiles =
-            arrangement.iter().map(|tile| -> Tile { // TODO add Tile method to remove border
+        let cropped_tiles = arrangement
+            .iter()
+            .map(|tile| -> Tile {
+                // TODO add Tile method to remove border
                 let mut wide_rows = tile.pixels.clone();
                 wide_rows.remove(wide_rows.len() - 1);
                 wide_rows.remove(0);
 
                 Tile {
                     id: tile.id,
-                    pixels: wide_rows.iter().map(|wide_row| -> Vec<char> {
-                        let mut row = wide_row.clone();
-                        row.remove(row.len() - 1);
-                        row.remove(0);
-                        row
-                    }).collect(),
+                    pixels: wide_rows
+                        .iter()
+                        .map(|wide_row| -> Vec<char> {
+                            let mut row = wide_row.clone();
+                            row.remove(row.len() - 1);
+                            row.remove(0);
+                            row
+                        })
+                        .collect(),
                 }
-            }).collect::<Vec<Tile>>();
+            })
+            .collect::<Vec<Tile>>();
         let combined_tile = combine(&cropped_tiles, tiles_on_edge, edge_size);
         for mut permutation in combined_tile.permutations() {
             let num_sea_monsters = permutation.highlight_seamonsters();
