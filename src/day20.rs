@@ -67,7 +67,7 @@ impl Clone for OrientedTile {
     }
 }
 
-impl OrientedTile {
+impl<'t> OrientedTile {
 
     /// The reference pattern of what a Sea Monster looks like
     const SEA_MONSTER: [[char; 20]; 3] = [
@@ -85,23 +85,22 @@ impl OrientedTile {
         ],
     ];
 
-    fn left_border(&self) -> Vec<char> {
-        // TODO can we return Iterator instead of Vec?
-        self.pixels.iter().map(|row| row[0]).collect()
+    fn left_border(&'t self) -> impl Iterator<Item=char> + 't {
+        self.pixels.iter().map(|row| row[0])
     }
 
-    fn right_border(&self) -> Vec<char> {
+    fn right_border(&'t self) -> impl Iterator<Item=char> + 't {
         let last_index = self.pixels.len() - 1;
-        self.pixels.iter().map(|row| row[last_index]).collect()
+        self.pixels.iter().map(move |row| row[last_index])
     }
 
-    fn top_border(&self) -> Vec<char> {
-        self.pixels[0].clone()
+    fn top_border(&'t self) -> impl Iterator<Item=char> + 't {
+        self.pixels[0].iter().copied()
     }
 
-    fn bottom_border(&self) -> Vec<char> {
+    fn bottom_border(&'t self) -> impl Iterator<Item=char> + 't {
         let last_index = self.pixels.len() - 1;
-        self.pixels[last_index].clone()
+        self.pixels[last_index].iter().copied()
     }
 
     fn flip_horizontally(&self) -> Self {
@@ -167,21 +166,20 @@ impl OrientedTile {
     }
 
     fn fits_to_left_of(&self, right_candidate: &OrientedTile) -> bool {
-        OrientedTile::edges_match(&right_candidate.left_border(), &self.right_border())
+        OrientedTile::edges_match(right_candidate.left_border(), self.right_border())
     }
 
     fn fits_above(&self, bottom_candidate: &OrientedTile) -> bool {
-        OrientedTile::edges_match(&bottom_candidate.top_border(), &self.bottom_border())
+        OrientedTile::edges_match(bottom_candidate.top_border(), self.bottom_border())
     }
 
-    fn edges_match(left: &[char], right: &[char]) -> bool {
-        assert_eq!(left.len(), right.len(), "Edge lengths do not match");
-        for i in 0..left.len() {
-            if left[i] != right[i] {
-                return false;
+    fn edges_match(mut x: impl Iterator<Item=char>, mut y: impl Iterator<Item=char>) -> bool {
+        while let (Some(x), Some(y)) = (x.next(), y.next()) {
+            if x != y {
+                return false
             }
         }
-        true
+        x.next().is_none() && y.next().is_none()
     }
 
     /// Highlights sea monsters with 'O'
