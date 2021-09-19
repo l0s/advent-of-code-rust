@@ -1,14 +1,18 @@
 // --- Day 20: Jurassic Jigsaw ---
 // https://adventofcode.com/2020/day/20
 
-use std::fmt::{Display, Formatter};
-
 use crate::get_lines;
 
 type Id = u64;
 
+/// A square portion of a satellite image. Because the satellite's camera array is malfunctioning,
+/// it may have been rotated or flipped randomly. Each tile's image border matches with another
+/// tile.
 pub struct Tile {
     id: Id,
+
+    /// The square grid of pixels. The length of the outer vector is the same as the length of each
+    /// inner vector.
     pixels: Vec<Vec<char>>,
 }
 
@@ -45,36 +49,27 @@ impl Tile {
     }
 }
 
+/// A satellite image tile that has been oriented in a specific way.
 pub struct OrientedTile {
     id: Id,
     pixels: Vec<Vec<char>>, // TODO this is a lot of copying, can this just be a view into the underlying tile?
-}
-
-impl Display for OrientedTile {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}:\n{}",
-            self.id,
-            self.pixels
-                .iter()
-                .map(|row| row.iter().cloned().collect::<String>())
-                .collect::<Vec<String>>()
-                .join("\n")
-        )
-    }
 }
 
 impl Clone for OrientedTile {
     fn clone(&self) -> Self {
         OrientedTile {
             id: self.id,
-            pixels: self.pixels.iter().map(|row| row.to_vec()).collect(),
+            pixels: self.pixels
+                .iter()
+                .map(|row| row.to_vec())
+                .collect(),
         }
     }
 }
 
 impl OrientedTile {
+
+    /// The reference pattern of what a Sea Monster looks like
     const SEA_MONSTER: [[char; 20]; 3] = [
         [
             ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -189,7 +184,9 @@ impl OrientedTile {
         true
     }
 
-    /// Highlights sea monsters with 'O' and returns the total number of sea monsters identified
+    /// Highlights sea monsters with 'O'
+    ///
+    /// Returns: the number of sea monsters identified
     pub fn highlight_seamonsters(&mut self) -> usize {
         // TODO should I return boolean instead?
         let window_height = OrientedTile::SEA_MONSTER.len();
@@ -209,6 +206,11 @@ impl OrientedTile {
         sum
     }
 
+    /// Highlights a single sea monster with 'O'
+    ///
+    /// Parameters:
+    /// - `vertical_offset` - how far "down" from the origin that the image starts
+    /// - `horizontal_offset` - how far "right" from the origin that the image starts
     fn highlight_seamonster(&mut self, vertical_offset: usize, horizontal_offset: usize) {
         for i in 0..OrientedTile::SEA_MONSTER.len() {
             let pattern_row = OrientedTile::SEA_MONSTER[i];
@@ -222,6 +224,14 @@ impl OrientedTile {
         }
     }
 
+    /// Determine whether or not the window whose origin is at the specified coördinates contains a
+    /// sea monster.
+    ///
+    /// Parameters:
+    /// - `vertical_offset` - the vertical origin of the window in question
+    /// - `horizontal_offset` - the horizontal origin of the window in question
+    ///
+    /// Returns: true if and only if the window contains a sea monster
     fn contains_sea_monster(&self, vertical_offset: usize, horizontal_offset: usize) -> bool {
         for i in 0..OrientedTile::SEA_MONSTER.len() {
             let pattern_row = OrientedTile::SEA_MONSTER[i];
@@ -257,6 +267,9 @@ impl OrientedTile {
     }
 }
 
+/// Retrieve all of the image tiles from the Mythical Information Bureau's satellite's camera array.
+/// Due to a malfunction in the array, the tiles arrive in a random order and rotated or flipped
+/// randomly.
 pub fn get_input() -> Vec<Tile> {
     // TODO can I return an Iterator?
     let mut result = vec![];
@@ -284,6 +297,13 @@ pub fn get_input() -> Vec<Tile> {
     result
 }
 
+/// Find all the valid permutations of tile orientations that yield an image.
+///
+/// Parameters:
+/// - `partial_arrangement` - A valid arrangement prefix
+/// - `remaining_tiles` - All of the tiles not in `partial_arrangement`
+/// - `edge_length` - the number of _tiles_ on each edge of the final arrangement
+/// Returns: All the permutations of all the arrangements of tiles whose borders match
 pub fn get_valid_arrangements(
     partial_arrangement: Vec<OrientedTile>,
     remaining_tiles: Vec<Tile>,
@@ -379,6 +399,12 @@ fn fits(
     None
 }
 
+/// Combine a specific arrangement of tiles into one big tile
+///
+/// Parameters
+/// - `arrangement` - a square arrangement of tiles. It's length must equal `tiles_on_edge^2`
+/// - `tiles_on_edge` - the number of tiles on each border of the image
+/// - `edge_size` - the total number of pixels in the final image
 pub fn combine(arrangement: &[Tile], tiles_on_edge: usize, edge_size: usize) -> Tile {
     let mut grid: Vec<Vec<char>> = Vec::with_capacity(edge_size);
     for (index, tile) in arrangement.iter().enumerate() {
