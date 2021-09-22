@@ -1,6 +1,8 @@
 // --- Day 20: Jurassic Jigsaw ---
 // https://adventofcode.com/2020/day/20
 
+use Transformation::*;
+
 use crate::get_lines;
 
 type Id = u64;
@@ -30,6 +32,8 @@ impl Tile {
         let original = OrientedTile {
             id: self.id,
             pixels: self.pixels.clone(),
+            tile: self,
+            transformations: vec![],
         };
         let r90 = original.rotate90();
         vec![
@@ -49,13 +53,38 @@ impl Tile {
     }
 }
 
-/// A satellite image tile that has been oriented in a specific way.
-pub struct OrientedTile {
-    id: Id,
-    pixels: Vec<Vec<char>>, // TODO this is a lot of copying, can this just be a view into the underlying tile?
+#[derive(Copy, Clone)]
+enum Transformation {
+    Rotate90,
+    Rotate180,
+    Rotate270,
+    FlipHorizontally,
+    FlipVertically,
 }
 
-impl Clone for OrientedTile {
+impl Transformation {
+    fn transform(&self, x: usize, y: usize, length: usize) -> (usize, usize) {
+        match self {
+            Rotate90 => (y, length - x),
+            Rotate180 => (length - x, length - y),
+            Rotate270 => (length - y, length - x),
+            FlipHorizontally => (x, length - y),
+            FlipVertically => (length - x, y),
+        }
+    }
+}
+
+/// A satellite image tile that has been oriented in a specific way.
+pub struct OrientedTile<'t> {
+    id: Id,
+    // #[deprecated]
+    pixels: Vec<Vec<char>>,
+    // TODO this is a lot of copying, can this just be a view into the underlying tile?
+    tile: &'t Tile,
+    transformations: Vec<Transformation>,
+}
+
+impl<'t> Clone for OrientedTile<'t> {
     fn clone(&self) -> Self {
         OrientedTile {
             id: self.id,
@@ -63,12 +92,13 @@ impl Clone for OrientedTile {
                 .iter()
                 .map(|row| row.to_vec())
                 .collect(),
+            tile: self.tile,
+            transformations: self.transformations.clone(),
         }
     }
 }
 
-impl<'t> OrientedTile {
-
+impl<'t> OrientedTile<'t> {
     /// The reference pattern of what a Sea Monster looks like
     const SEA_MONSTER: [[char; 20]; 3] = [
         [
@@ -109,20 +139,30 @@ impl<'t> OrientedTile {
             .iter()
             .map(|row| row.iter().cloned().rev().collect())
             .collect();
+        let mut transformations = self.transformations.clone();
+        transformations.push(Transformation::FlipHorizontally);
         OrientedTile {
             id: self.id,
             pixels,
+            tile: self.tile,
+            transformations,
         }
     }
 
     fn flip_vertically(&self) -> Self {
+        let mut transformations = self.transformations.clone();
+        transformations.push(Transformation::FlipVertically);
         OrientedTile {
             id: self.id,
             pixels: self.pixels.iter().rev().cloned().collect(),
+            tile: self.tile,
+            transformations,
         }
     }
 
     fn rotate90(&self) -> Self {
+        let mut transformations = self.transformations.clone();
+        transformations.push(Transformation::Rotate90);
         OrientedTile {
             id: self.id,
             pixels: (0..self.pixels.len())
@@ -133,10 +173,14 @@ impl<'t> OrientedTile {
                         .collect()
                 })
                 .collect(),
+            tile: self.tile,
+            transformations,
         }
     }
 
     fn rotate180(&self) -> Self {
+        let mut transformations = self.transformations.clone();
+        transformations.push(Transformation::Rotate180);
         OrientedTile {
             id: self.id,
             pixels: (0..self.pixels.len())
@@ -148,10 +192,14 @@ impl<'t> OrientedTile {
                         .collect()
                 })
                 .collect(),
+            tile: self.tile,
+            transformations,
         }
     }
 
     fn rotate270(&self) -> Self {
+        let mut transformations = self.transformations.clone();
+        transformations.push(Transformation::Rotate270);
         OrientedTile {
             id: self.id,
             pixels: (0..self.pixels.len())
@@ -162,6 +210,8 @@ impl<'t> OrientedTile {
                         .collect()
                 })
                 .collect(),
+            tile: self.tile,
+            transformations,
         }
     }
 
@@ -176,7 +226,7 @@ impl<'t> OrientedTile {
     fn edges_match(mut x: impl Iterator<Item=char>, mut y: impl Iterator<Item=char>) -> bool {
         while let (Some(x), Some(y)) = (x.next(), y.next()) {
             if x != y {
-                return false
+                return false;
             }
         }
         x.next().is_none() && y.next().is_none()
@@ -302,19 +352,19 @@ pub fn get_input() -> Vec<Tile> {
 /// - `remaining_tiles` - All of the tiles not in `partial_arrangement`
 /// - `edge_length` - the number of _tiles_ on each edge of the final arrangement
 /// Returns: All the permutations of all the arrangements of tiles whose borders match
-pub fn get_valid_arrangements(
-    partial_arrangement: Vec<OrientedTile>,
-    remaining_tiles: Vec<Tile>,
+pub fn get_valid_arrangements<'t, 'a>(
+    partial_arrangement: &'a [OrientedTile<'t>],
+    remaining_tiles: Vec<&'t Tile>,
     edge_length: usize,
-) -> Vec<Vec<OrientedTile>> {
+) -> Vec<Vec<OrientedTile<'t>>> {
     // TODO can I return an Iterator instead?
     if remaining_tiles.is_empty() {
-        return vec![partial_arrangement];
+        return vec![partial_arrangement.to_vec()];
     } else if partial_arrangement.is_empty() {
         // Find candidates for the top-left tile
         for i in 0..remaining_tiles.len() {
-            let candidate = remaining_tiles.get(i).unwrap();
-            for orientation in candidate.permutations() {
+            let candidate = remaining_tiles[i]; // choose a candidate for the top left corner
+            for orientation in candidate.permutations() { // choose an orientation for the candidate tile
                 let partial = vec![orientation];
                 let (left, _) = remaining_tiles.split_at(i);
                 let (_, right) = remaining_tiles.split_at(i + 1);
@@ -322,7 +372,9 @@ pub fn get_valid_arrangements(
                 remaining.extend(left.iter().cloned());
                 remaining.extend(right.iter().cloned());
 
-                let valid_arrangements = get_valid_arrangements(partial, remaining, edge_length);
+                // get all the possible arrangements with this orientation as the first tile
+                let valid_arrangements =
+                    get_valid_arrangements(&partial, remaining, edge_length);
                 if !valid_arrangements.is_empty() {
                     // There are more valid arrangements, but we only need one
                     return valid_arrangements;
@@ -335,9 +387,13 @@ pub fn get_valid_arrangements(
     // Find all possible suffixes given the partial, valid, arrangement
     let mut prefixes = vec![];
     for i in 0..remaining_tiles.len() {
-        let candidate = remaining_tiles.get(i).unwrap();
-        if let Some(candidate) = fits(&partial_arrangement, candidate, edge_length) {
-            let mut partial = partial_arrangement.clone();
+        // choose a candidate for the next tile
+        let candidate = remaining_tiles[i];
+        // check if it fits in some orientation
+        let mut partial = vec![];
+        partial.extend_from_slice(partial_arrangement);
+        if let Some(candidate) = fits(&partial, candidate, edge_length) {
+            let mut partial = partial_arrangement.to_vec();
             partial.push(candidate);
 
             let (left, _) = remaining_tiles.split_at(i);
@@ -346,18 +402,18 @@ pub fn get_valid_arrangements(
             remaining.extend(left.iter().cloned());
             remaining.extend(right.iter().cloned());
 
-            let valid_arrangements = get_valid_arrangements(partial, remaining, edge_length);
+            let valid_arrangements = get_valid_arrangements(&partial, remaining, edge_length);
             prefixes.extend(valid_arrangements.iter().cloned());
         }
     }
     prefixes
 }
 
-fn tile_above(
-    arrangement: &[OrientedTile],
+fn tile_above<'a>( // TODO move this into an "arrangement" struct
+    arrangement: &'a [OrientedTile],
     index: usize,
     edge_length: usize,
-) -> Option<&OrientedTile> {
+) -> Option<&'a OrientedTile<'a>> {
     if index < edge_length {
         None
     } else {
@@ -365,11 +421,11 @@ fn tile_above(
     }
 }
 
-fn tile_to_left(
-    arrangement: &[OrientedTile],
+fn tile_to_left<'a>( // TODO move this into an "arrangement" struct
+    arrangement: &'a [OrientedTile],
     index: usize,
     edge_length: usize,
-) -> Option<&OrientedTile> {
+) -> Option<&'a OrientedTile<'a>> {
     if index % edge_length == 0 {
         None
     } else {
@@ -377,11 +433,11 @@ fn tile_to_left(
     }
 }
 
-fn fits(
-    arrangement: &[OrientedTile],
-    candidate: &Tile,
+fn fits<'a, 't>(
+    arrangement: &'a [OrientedTile],
+    candidate: &'t Tile,
     edge_length: usize,
-) -> Option<OrientedTile> {
+) -> Option<OrientedTile<'t>> {
     let new_index = arrangement.len();
     let tile_above = tile_above(arrangement, new_index, edge_length);
     let tile_to_left = tile_to_left(arrangement, new_index, edge_length);
@@ -432,13 +488,15 @@ pub fn combine(arrangement: &[Tile], tiles_on_edge: usize, edge_size: usize) -> 
 mod tests {
     use crate::day20::{combine, get_input, get_valid_arrangements, Tile};
 
-    // TODO extract common code to pull arrangement once
+// TODO extract common code to pull arrangement once
 
     #[test]
     fn part1() {
         let tiles = get_input();
+        let refs = tiles.iter().map(|tile| tile).collect();
         let edge_length = (tiles.len() as f32).sqrt() as usize;
-        let possible_arrangements = get_valid_arrangements(vec![], tiles, edge_length);
+        let empty = vec![];
+        let possible_arrangements = get_valid_arrangements(&empty, refs, edge_length);
         assert!(!possible_arrangements.is_empty());
         let arrangement = possible_arrangements.get(0).unwrap();
         let top_left = arrangement.get(0).unwrap();
@@ -455,9 +513,11 @@ mod tests {
     #[test]
     fn part2() {
         let tiles = get_input();
+        let refs = tiles.iter().map(|tile| tile).collect();
         let tiles_on_edge = (tiles.len() as f32).sqrt() as usize;
         let edge_size = tiles.get(0).unwrap().pixels.len();
-        let possible_arrangements = get_valid_arrangements(vec![], tiles, tiles_on_edge);
+        let empty = vec![];
+        let possible_arrangements = get_valid_arrangements(&empty, refs, tiles_on_edge);
         assert!(!possible_arrangements.is_empty());
         let arrangement = possible_arrangements.get(0).unwrap();
 
