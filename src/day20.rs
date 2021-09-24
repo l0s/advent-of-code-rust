@@ -1,9 +1,12 @@
 // --- Day 20: Jurassic Jigsaw ---
 // https://adventofcode.com/2020/day/20
 
+use std::ops::{Index, IndexMut};
+
 use Transformation::*;
 
 use crate::get_lines;
+use std::fmt::{Display, Formatter};
 
 type Id = u64;
 
@@ -18,12 +21,37 @@ pub struct Tile {
     pixels: Vec<Vec<char>>,
 }
 
+impl Index<usize> for Tile {
+    type Output = Vec<char>;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.pixels[index]
+    }
+}
+
+impl IndexMut<usize> for Tile {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.pixels[index]
+    }
+}
+
 impl Clone for Tile {
     fn clone(&self) -> Self {
         Tile {
             id: self.id,
             pixels: self.pixels.clone(),
         }
+    }
+}
+
+impl Display for Tile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let picture = self.pixels.iter().map(|row| -> String {
+            let mut joined: String = row.iter().cloned().collect::<String>();
+            joined.push('\n');
+            joined
+        }).collect::<String>();
+        write!(f, "{}:\n{}\n", self.id, picture)
     }
 }
 
@@ -51,9 +79,44 @@ impl Tile {
             original,
         ]
     }
+
+    /// Determines how rough the waters are in the sea monsters' habitat
+    ///
+    /// Returns: the number of '#' pixels in the image
+    pub fn roughness(&self) -> usize {
+        let mut result = 0usize;
+        for row in &self.pixels {
+            for cell in row {
+                if cell == &'#' {
+                    result += 1;
+                }
+            }
+        }
+        result
+    }
+
+    pub fn crop_borders(&self) -> Self {
+        let mut wide_rows = self.pixels.clone();
+        wide_rows.remove(wide_rows.len() - 1);
+        wide_rows.remove(0);
+
+        Tile {
+            id: self.id,
+            pixels: wide_rows
+                .iter()
+                .cloned()
+                .map(|mut row| -> Vec<char> {
+                    // let mut row = wide_row.clone();
+                    row.remove(row.len() - 1);
+                    row.remove(0);
+                    row
+                })
+                .collect(),
+        }
+    }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum Transformation {
     Rotate90,
     Rotate180,
@@ -64,20 +127,23 @@ enum Transformation {
 
 impl Transformation {
     fn transform(&self, x: usize, y: usize, length: usize) -> (usize, usize) {
-        match self {
-            Rotate90 => (y, length - x),
-            Rotate180 => (length - x, length - y),
-            Rotate270 => (length - y, length - x),
-            FlipHorizontally => (x, length - y),
-            FlipVertically => (length - x, y),
-        }
+        let result = match self {
+            Rotate90 => (y, length - x - 1),
+            Rotate180 => (length - x - 1, length - y - 1),
+            Rotate270 => (length - y - 1, length - x - 1),
+            FlipHorizontally => (x, length - y - 1),
+            FlipVertically => (length - x - 1, y),
+        };
+        // eprintln!("{:?}: ({}, {}) -> ({}, {})", self, x, y, result.0, result.1);
+        result
     }
 }
 
 /// A satellite image tile that has been oriented in a specific way.
 pub struct OrientedTile<'t> {
-    id: Id,
-    // #[deprecated]
+    #[deprecated]
+    id: Id, // FIXME pass through to `tile`
+    #[deprecated]
     pixels: Vec<Vec<char>>,
     // TODO this is a lot of copying, can this just be a view into the underlying tile?
     tile: &'t Tile,
@@ -98,6 +164,17 @@ impl<'t> Clone for OrientedTile<'t> {
     }
 }
 
+impl<'t> Display for OrientedTile<'t> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let picture = self.pixels().iter().map(|row| -> String {
+            let mut joined: String = row.iter().cloned().collect::<String>();
+            joined.push('\n');
+            joined
+        }).collect::<String>();
+        write!(f, "{}:\n{}\n", self.tile.id, picture)
+    }
+}
+
 impl<'t> OrientedTile<'t> {
     /// The reference pattern of what a Sea Monster looks like
     const SEA_MONSTER: [[char; 20]; 3] = [
@@ -115,22 +192,70 @@ impl<'t> OrientedTile<'t> {
         ],
     ];
 
+    pub fn tile(&self) -> Tile {
+        Tile {
+            id: self.tile.id,
+            pixels: self.pixels(),
+        }
+    }
+
+    pub fn pixels(&self) -> Vec<Vec<char>> {
+        (0..self.edge_length()) // final row indices
+            .map(|i| -> Vec<char> {
+                (0..self.edge_length()) // final column indices
+                    .map(|j| self.translate(i, j)) // original coördinates
+                    .map(|(x, y)| self.tile[x][y])// original char
+                    .collect()
+            })
+            .collect()
+    }
+
+    fn edge_length(&self) -> usize {
+        self.tile.pixels.len()
+    }
+
+    fn translate(&self, x: usize, y: usize) -> (usize, usize) {
+        self.transformations
+            .iter()
+            .fold((x, y),
+                  |previous, transformation| transformation
+                      .transform(previous.0, previous.1, self.edge_length()))
+    }
+
+    fn item_at(&self, x: usize, y: usize) -> char {
+        let coordinates = self.translate(x, y);
+        self.tile[coordinates.0][coordinates.1]
+    }
+
     fn left_border(&'t self) -> impl Iterator<Item=char> + 't {
-        self.pixels.iter().map(|row| row[0])
+        (0..self.edge_length())
+            .map(move |i| self.item_at(i, 0))
     }
 
     fn right_border(&'t self) -> impl Iterator<Item=char> + 't {
-        let last_index = self.pixels.len() - 1;
-        self.pixels.iter().map(move |row| row[last_index])
+        let last_index = self.edge_length() - 1;
+        (0..self.edge_length())
+            .map(move |i| self.item_at(i, last_index))
     }
 
     fn top_border(&'t self) -> impl Iterator<Item=char> + 't {
-        self.pixels[0].iter().copied()
+        (0..self.edge_length())
+            .map(move |j| self.item_at(0, j))
     }
 
     fn bottom_border(&'t self) -> impl Iterator<Item=char> + 't {
-        let last_index = self.pixels.len() - 1;
-        self.pixels[last_index].iter().copied()
+        let last_index = self.edge_length() - 1;
+        // self.pixels[last_index].iter().copied()
+        // FIXME this yields different results than the line above T_T
+        (0..self.edge_length())
+            .map(move |j| self.item_at(last_index, j))
+
+        // (0..self.edge_length())
+        //     .map(move |j| self.transformations.iter()
+        //         .fold((last_index, j),
+        //               |accumulator, transformation| transformation
+        //                   .transform(accumulator.0, accumulator.1, self.edge_length())))
+        //     .map(move |coordinates| self.tile[coordinates.0][coordinates.1])
     }
 
     fn flip_horizontally(&self) -> Self {
@@ -234,39 +359,46 @@ impl<'t> OrientedTile<'t> {
 
     /// Highlights sea monsters with 'O'
     ///
-    /// Returns: the number of sea monsters identified
-    pub fn highlight_seamonsters(&mut self) -> usize {
+    /// Returns: the number of sea monsters identified and a copy of the tile with the sea monsters
+    /// highlighted
+    pub fn highlight_seamonsters(&'t self) -> (usize, Tile) {
         // TODO should I return boolean instead?
         let window_height = OrientedTile::SEA_MONSTER.len();
         let window_width = OrientedTile::SEA_MONSTER[0].len();
-        let vertical_windows = self.pixels.len() - window_height;
-        let horizontal_windows = self.pixels.len() - window_width;
+        let vertical_windows = self.edge_length() - window_height;
+        let horizontal_windows = self.edge_length() - window_width;
+
+        let mut pixels = self.pixels();
 
         let mut sum = 0usize;
         for i in 0..vertical_windows {
             for j in 0..horizontal_windows {
-                if self.contains_sea_monster(i, j) {
+                if self.contains_sea_monster(&pixels, i, j) {
                     sum += 1;
-                    self.highlight_seamonster(i, j);
+                    self.highlight_seamonster(&mut pixels,i, j);
                 }
             }
         }
-        sum
+        let tile = Tile {
+            id: self.tile.id,
+            pixels,
+        };
+        (sum, tile)
     }
 
-    /// Highlights a single sea monster with 'O'
+    /// Paints a sea monster using '0' in the given window, overwriting any existing pixels
     ///
     /// Parameters:
     /// - `vertical_offset` - how far "down" from the origin that the image starts
     /// - `horizontal_offset` - how far "right" from the origin that the image starts
-    fn highlight_seamonster(&mut self, vertical_offset: usize, horizontal_offset: usize) {
+    fn highlight_seamonster(&'t self, pixels: &mut Vec<Vec<char>>, vertical_offset: usize, horizontal_offset: usize) {
         for i in 0..OrientedTile::SEA_MONSTER.len() {
             let pattern_row = OrientedTile::SEA_MONSTER[i];
-            let image_row = &mut self.pixels[i + vertical_offset];
             for j in 0..pattern_row.len() {
                 let pattern = pattern_row[j];
+                let image_row = &mut pixels[ i + vertical_offset ];
                 if pattern == '#' {
-                    image_row[j + horizontal_offset] = 'O';
+                    image_row[ j + horizontal_offset ] = '0';
                 }
             }
         }
@@ -280,14 +412,14 @@ impl<'t> OrientedTile<'t> {
     /// - `horizontal_offset` - the horizontal origin of the window in question
     ///
     /// Returns: true if and only if the window contains a sea monster
-    fn contains_sea_monster(&self, vertical_offset: usize, horizontal_offset: usize) -> bool {
+    fn contains_sea_monster(&'t self, pixels: &Vec<Vec<char>>, vertical_offset: usize, horizontal_offset: usize) -> bool {
         for i in 0..OrientedTile::SEA_MONSTER.len() {
             let pattern_row = OrientedTile::SEA_MONSTER[i];
-            let image_row = &self.pixels[i + vertical_offset];
+            let image_row = &pixels[ i + vertical_offset ];
             for j in 0..pattern_row.len() {
                 let pattern = pattern_row[j];
                 // spaces can be anything
-                if pattern == '#' && image_row[j + horizontal_offset] != '#' {
+                if pattern == '#' && image_row[ j + horizontal_offset ] != '#' {
                     // only the '#' pixels need to match
                     return false;
                 }
@@ -296,23 +428,6 @@ impl<'t> OrientedTile<'t> {
         true
     }
 
-    /// Determines how rough the waters are in the sea monsters' habitat
-    ///
-    /// Note the sea monsters must first be highlighted by invoking
-    /// `highlight_seamonster(&mut self, usize, usize)`.
-    ///
-    /// Returns: the number of '#' in the image that are _not_ part of a sea monster
-    pub fn roughness(&self) -> usize {
-        let mut result = 0usize;
-        for row in &self.pixels {
-            for cell in row {
-                if cell == &'#' {
-                    result += 1;
-                }
-            }
-        }
-        result
-    }
 }
 
 /// Retrieve all of the image tiles from the Mythical Information Bureau's satellite's camera array.
@@ -491,6 +606,29 @@ mod tests {
 // TODO extract common code to pull arrangement once
 
     #[test]
+    fn crop() {
+        // given
+        let original = Tile {
+            id: 0,
+            pixels: vec![
+                vec![ 'X', 'X', 'X', 'X' ],
+                vec![ 'X', 'O', 'O', 'X' ],
+                vec![ 'X', 'O', 'O', 'X' ],
+                vec![ 'X', 'X', 'X', 'X' ],
+            ]
+        };
+
+        // when
+        let cropped = original.crop_borders();
+
+        // then
+        let mut iter = cropped.pixels.iter();
+        assert_eq!(iter.next(), Some(&vec!['O', 'O']));
+        assert_eq!(iter.next(), Some(&vec!['O', 'O']));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
     fn part1() {
         let tiles = get_input();
         let refs = tiles.iter().map(|tile| tile).collect();
@@ -519,37 +657,25 @@ mod tests {
         let empty = vec![];
         let possible_arrangements = get_valid_arrangements(&empty, refs, tiles_on_edge);
         assert!(!possible_arrangements.is_empty());
-        let arrangement = possible_arrangements.get(0).unwrap();
+        let arrangement = &possible_arrangements[0];
 
         let cropped_tiles = arrangement
             .iter()
-            .map(|tile| -> Tile {
-                // TODO add Tile method to remove border
-                let mut wide_rows = tile.pixels.clone();
-                wide_rows.remove(wide_rows.len() - 1);
-                wide_rows.remove(0);
-
-                Tile {
-                    id: tile.id,
-                    pixels: wide_rows
-                        .iter()
-                        .map(|wide_row| -> Vec<char> {
-                            let mut row = wide_row.clone();
-                            row.remove(row.len() - 1);
-                            row.remove(0);
-                            row
-                        })
-                        .collect(),
-                }
-            })
+            .map(|oriented| oriented.tile())
+            .map(|tile| tile.crop_borders())
             .collect::<Vec<Tile>>();
         let combined_tile = combine(&cropped_tiles, tiles_on_edge, edge_size);
+        eprintln!("-- combined tile:\n{}", combined_tile);
         for mut permutation in combined_tile.permutations() {
-            let num_sea_monsters = permutation.highlight_seamonsters();
+            // eprintln!("-- looking for sea monster in:\n{}", permutation);
+            let (num_sea_monsters, highlighted) = permutation.highlight_seamonsters();
+            eprintln!("-- found {} sea monsters.", num_sea_monsters);
+            eprintln!("-- highlighted:\n{}", highlighted);
             if num_sea_monsters > 0 {
-                println!("Part 2: {}", permutation.roughness());
-                break;
+                println!("Part 2: {}", highlighted.roughness());
+                return;
             }
         }
+        assert!(false, "None of the permutations had sea monsters");
     }
 }
