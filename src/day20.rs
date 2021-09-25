@@ -1,12 +1,13 @@
 // --- Day 20: Jurassic Jigsaw ---
 // https://adventofcode.com/2020/day/20
 
+use std::fmt::{Display, Formatter};
 use std::ops::{Index, IndexMut};
 
 use Transformation::*;
 
 use crate::get_lines;
-use std::fmt::{Display, Formatter};
+use std::iter::FromIterator;
 
 type Id = u64;
 
@@ -448,6 +449,110 @@ pub fn get_input() -> Vec<Tile> {
     result
 }
 
+#[derive(Clone)]
+pub struct TileArrangement<'t> {
+    arrangement: Vec<OrientedTile<'t>>,
+
+    /// The number of _tiles_ on each edge of the arrangement
+    edge_length: usize,
+}
+
+impl<'t> FromIterator<&'t Tile> for TileArrangement<'t> {
+    fn from_iter<T: IntoIterator<Item = &'t Tile>>(iter: T) -> Self {
+        let tiles = iter.into_iter().collect::<Vec<&'t Tile>>();
+        let edge_length = (tiles.len() as f32).sqrt() as usize;
+        TileArrangement {
+            arrangement: tiles
+                .iter()
+                .map(|tile| OrientedTile {
+                    tile,
+                    transformations: vec![],
+                })
+                .collect(),
+            edge_length,
+        }
+    }
+}
+
+impl<'t> TileArrangement<'t> {
+    pub fn top_left_corner(&self) -> Option<&OrientedTile<'t>> {
+        self.arrangement.get(0)
+    }
+
+    pub fn top_right_corner(&self) -> Option<&OrientedTile<'t>> {
+        self.arrangement.get(self.edge_length - 1)
+    }
+
+    pub fn bottom_left_corner(&self) -> Option<&OrientedTile<'t>> {
+        self.arrangement
+            .get(self.arrangement.len() - self.edge_length)
+    }
+
+    pub fn bottom_right_corner(&self) -> Option<&OrientedTile<'t>> {
+        self.arrangement.last()
+    }
+
+    fn tile_above(&self, index: usize) -> Option<&OrientedTile<'t>> {
+        if index < self.edge_length {
+            None
+        } else {
+            self.arrangement.get(index - self.edge_length)
+        }
+    }
+
+    fn tile_to_left(&self, index: usize) -> Option<&OrientedTile<'t>> {
+        if index % self.edge_length == 0 {
+            None
+        } else {
+            self.arrangement.get(index - 1)
+        }
+    }
+
+    fn fits(&self, candidate: &'t Tile) -> Option<OrientedTile<'t>> {
+        let new_index = self.arrangement.len();
+        let tile_above = self.tile_above(new_index);
+        let tile_to_left = self.tile_to_left(new_index);
+        for orientation in candidate.permutations() {
+            let top_fits =
+                tile_above.is_none() || tile_above.as_ref().unwrap().fits_above(&orientation);
+            let left_fits = tile_to_left.is_none()
+                || tile_to_left.as_ref().unwrap().fits_to_left_of(&orientation);
+            if top_fits && left_fits {
+                return Some(orientation);
+            }
+        }
+        None
+    }
+
+    /// Combine a specific arrangement of tiles into one big tile
+    pub fn combine(&self) -> Tile {
+        // TODO check preconditions
+        let mut grid: Vec<Vec<char>> = Vec::with_capacity(self.edge_length);
+        for (index, tile) in self.arrangement.iter().enumerate() {
+            let tile_row = index / self.edge_length;
+            let tile_column = index % self.edge_length;
+            let pixels = tile.pixels();
+            let row_offset = pixels.len() * tile_row;
+            let column_offset = pixels.len() * tile_column;
+            for (original_row, row) in pixels.iter().enumerate() {
+                let row_id = original_row + row_offset;
+                for (original_column, pixel) in row.iter().enumerate() {
+                    let column_id = original_column + column_offset;
+                    if column_id == 0 {
+                        grid.push(Vec::with_capacity(self.edge_length));
+                    }
+                    let row = &mut grid[row_id];
+                    row.push(*pixel);
+                }
+            }
+        }
+        Tile {
+            id: 0,
+            pixels: grid,
+        }
+    }
+}
+
 /// Find all the valid permutations of tile orientations that yield an image.
 ///
 /// Parameters:
@@ -455,21 +560,25 @@ pub fn get_input() -> Vec<Tile> {
 /// - `remaining_tiles` - All of the tiles not in `partial_arrangement`
 /// - `edge_length` - the number of _tiles_ on each edge of the final arrangement
 /// Returns: All the permutations of all the arrangements of tiles whose borders match
-pub fn get_valid_arrangements<'t, 'a>(
-    partial_arrangement: &'a [OrientedTile<'t>],
+pub fn get_valid_arrangements<'t>(
+    partial_arrangement: TileArrangement<'t>,
     remaining_tiles: Vec<&'t Tile>,
     edge_length: usize,
-) -> Vec<Vec<OrientedTile<'t>>> {
+) -> Vec<TileArrangement<'t>> {
     // TODO can I return an Iterator instead?
     if remaining_tiles.is_empty() {
-        return vec![partial_arrangement.to_vec()];
-    } else if partial_arrangement.is_empty() {
+        return vec![partial_arrangement];
+    } else if partial_arrangement.arrangement.is_empty() {
         // Find candidates for the top-left tile
         for i in 0..remaining_tiles.len() {
             let candidate = remaining_tiles[i]; // choose a candidate for the top left corner
             for orientation in candidate.permutations() {
                 // choose an orientation for the candidate tile
                 let partial = vec![orientation];
+                let partial = TileArrangement {
+                    arrangement: partial,
+                    edge_length,
+                };
                 let (left, _) = remaining_tiles.split_at(i);
                 let (_, right) = remaining_tiles.split_at(i + 1);
                 let mut remaining = vec![];
@@ -477,7 +586,7 @@ pub fn get_valid_arrangements<'t, 'a>(
                 remaining.extend(right.iter().cloned());
 
                 // get all the possible arrangements with this orientation as the first tile
-                let valid_arrangements = get_valid_arrangements(&partial, remaining, edge_length);
+                let valid_arrangements = get_valid_arrangements(partial, remaining, edge_length);
                 if !valid_arrangements.is_empty() {
                     // There are more valid arrangements, but we only need one
                     return valid_arrangements;
@@ -494,10 +603,18 @@ pub fn get_valid_arrangements<'t, 'a>(
         let candidate = remaining_tiles[i];
         // check if it fits in some orientation
         let mut partial = vec![];
-        partial.extend_from_slice(partial_arrangement);
-        if let Some(candidate) = fits(&partial, candidate, edge_length) {
-            let mut partial = partial_arrangement.to_vec();
+        partial.extend_from_slice(&partial_arrangement.arrangement);
+        let partial = TileArrangement {
+            arrangement: partial,
+            edge_length,
+        };
+        if let Some(candidate) = partial.fits(candidate) {
+            let mut partial = partial_arrangement.arrangement.to_vec();
             partial.push(candidate);
+            let partial = TileArrangement {
+                arrangement: partial,
+                edge_length,
+            };
 
             let (left, _) = remaining_tiles.split_at(i);
             let (_, right) = remaining_tiles.split_at(i + 1);
@@ -505,57 +622,11 @@ pub fn get_valid_arrangements<'t, 'a>(
             remaining.extend(left.iter().cloned());
             remaining.extend(right.iter().cloned());
 
-            let valid_arrangements = get_valid_arrangements(&partial, remaining, edge_length);
+            let valid_arrangements = get_valid_arrangements(partial, remaining, edge_length);
             prefixes.extend(valid_arrangements.iter().cloned());
         }
     }
     prefixes
-}
-
-fn tile_above<'a>(
-    // TODO move this into an "arrangement" struct
-    arrangement: &'a [OrientedTile],
-    index: usize,
-    edge_length: usize,
-) -> Option<&'a OrientedTile<'a>> {
-    if index < edge_length {
-        None
-    } else {
-        arrangement.get(index - edge_length)
-    }
-}
-
-fn tile_to_left<'a>(
-    // TODO move this into an "arrangement" struct
-    arrangement: &'a [OrientedTile],
-    index: usize,
-    edge_length: usize,
-) -> Option<&'a OrientedTile<'a>> {
-    if index % edge_length == 0 {
-        None
-    } else {
-        arrangement.get(index - 1)
-    }
-}
-
-fn fits<'a, 't>(
-    arrangement: &'a [OrientedTile],
-    candidate: &'t Tile,
-    edge_length: usize,
-) -> Option<OrientedTile<'t>> {
-    let new_index = arrangement.len();
-    let tile_above = tile_above(arrangement, new_index, edge_length);
-    let tile_to_left = tile_to_left(arrangement, new_index, edge_length);
-    for orientation in candidate.permutations() {
-        let top_fits =
-            tile_above.is_none() || tile_above.as_ref().unwrap().fits_above(&orientation);
-        let left_fits =
-            tile_to_left.is_none() || tile_to_left.as_ref().unwrap().fits_to_left_of(&orientation);
-        if top_fits && left_fits {
-            return Some(orientation);
-        }
-    }
-    None
 }
 
 /// Combine a specific arrangement of tiles into one big tile
@@ -564,6 +635,7 @@ fn fits<'a, 't>(
 /// - `arrangement` - a square arrangement of tiles. It's length must equal `tiles_on_edge^2`
 /// - `tiles_on_edge` - the number of tiles on each border of the image
 /// - `edge_size` - the total number of pixels in the final image
+#[deprecated]
 pub fn combine(arrangement: &[Tile], tiles_on_edge: usize, edge_size: usize) -> Tile {
     let mut grid: Vec<Vec<char>> = Vec::with_capacity(edge_size);
     for (index, tile) in arrangement.iter().enumerate() {
@@ -591,7 +663,7 @@ pub fn combine(arrangement: &[Tile], tiles_on_edge: usize, edge_size: usize) -> 
 
 #[cfg(test)]
 mod tests {
-    use crate::day20::{combine, get_input, get_valid_arrangements, Tile};
+    use crate::day20::{get_input, get_valid_arrangements, Tile, TileArrangement};
 
     // TODO extract common code to pull arrangement once
 
@@ -600,18 +672,22 @@ mod tests {
         let tiles = get_input();
         let refs = tiles.iter().collect();
         let edge_length = (tiles.len() as f32).sqrt() as usize;
-        let empty = vec![];
-        let possible_arrangements = get_valid_arrangements(&empty, refs, edge_length);
+        let empty = TileArrangement {
+            arrangement: vec![],
+            edge_length,
+        };
+        let possible_arrangements = get_valid_arrangements(empty, refs, edge_length);
         assert!(!possible_arrangements.is_empty());
         let arrangement = possible_arrangements.get(0).unwrap();
-        let top_left = arrangement.get(0).unwrap();
-        let top_right = arrangement.get(edge_length - 1).unwrap();
-        let bottom_left = arrangement.get(arrangement.len() - edge_length).unwrap();
-        let bottom_right = arrangement.get(arrangement.len() - 1).unwrap();
-        let result: u64 = vec![top_left, top_right, bottom_left, bottom_right]
-            .iter()
-            .map(|corner| corner.id())
-            .product();
+        let result: u64 = vec![
+            arrangement.top_left_corner().unwrap(),
+            arrangement.top_right_corner().unwrap(),
+            arrangement.bottom_left_corner().unwrap(),
+            arrangement.bottom_right_corner().unwrap(),
+        ]
+        .iter()
+        .map(|corner| corner.id())
+        .product();
         println!("Part 1: {}", result);
     }
 
@@ -619,20 +695,24 @@ mod tests {
     fn part2() {
         let tiles = get_input();
         let refs = tiles.iter().collect();
-        let tiles_on_edge = (tiles.len() as f32).sqrt() as usize;
-        let edge_size = tiles.get(0).unwrap().pixels.len();
-        let empty = vec![];
-        let possible_arrangements = get_valid_arrangements(&empty, refs, tiles_on_edge);
+        let edge_length = (tiles.len() as f32).sqrt() as usize;
+        let empty = TileArrangement {
+            arrangement: vec![],
+            edge_length,
+        };
+        let possible_arrangements = get_valid_arrangements(empty, refs, edge_length);
         assert!(!possible_arrangements.is_empty());
         let arrangement = &possible_arrangements[0];
 
-        let cropped_tiles = arrangement
+        let cropped = arrangement
+            .arrangement
             .iter()
             .map(|oriented| oriented.tile())
             .map(|tile| tile.crop_borders())
             .collect::<Vec<Tile>>();
-        let combined_tile = combine(&cropped_tiles, tiles_on_edge, edge_size);
-        for permutation in combined_tile.permutations() {
+        let cropped = cropped.iter().collect::<TileArrangement>();
+        let combined = cropped.combine();
+        for permutation in combined.permutations() {
             let (num_sea_monsters, highlighted) = permutation.highlight_seamonsters();
             if num_sea_monsters > 0 {
                 println!("Part 2: {}", highlighted.roughness());
