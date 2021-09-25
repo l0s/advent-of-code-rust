@@ -2,12 +2,12 @@
 // https://adventofcode.com/2020/day/20
 
 use std::fmt::{Display, Formatter};
+use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
 use Transformation::*;
 
 use crate::get_lines;
-use std::iter::FromIterator;
 
 type Id = u64;
 
@@ -342,7 +342,6 @@ impl<'t> OrientedTile<'t> {
     /// Returns: the number of sea monsters identified and a copy of the tile with the sea monsters
     /// highlighted
     pub fn highlight_seamonsters(&'t self) -> (usize, Tile) {
-        // TODO should I return boolean instead?
         let window_height = OrientedTile::SEA_MONSTER.len();
         let window_width = OrientedTile::SEA_MONSTER[0].len();
         let vertical_windows = self.edge_length() - window_height;
@@ -423,7 +422,6 @@ impl<'t> OrientedTile<'t> {
 /// Due to a malfunction in the array, the tiles arrive in a random order and rotated or flipped
 /// randomly.
 pub fn get_input() -> Vec<Tile> {
-    // TODO can I return an Iterator?
     let mut result = vec![];
     let mut id: Id = 0;
     let mut rows = vec![];
@@ -526,7 +524,11 @@ impl<'t> TileArrangement<'t> {
 
     /// Combine a specific arrangement of tiles into one big tile
     pub fn combine(&self) -> Tile {
-        // TODO check preconditions
+        assert_eq!(
+            self.arrangement.len(),
+            self.edge_length * self.edge_length,
+            "arrangement is incomplete"
+        );
         let mut grid: Vec<Vec<char>> = Vec::with_capacity(self.edge_length);
         for (index, tile) in self.arrangement.iter().enumerate() {
             let tile_row = index / self.edge_length;
@@ -553,19 +555,18 @@ impl<'t> TileArrangement<'t> {
     }
 }
 
-/// Find all the valid permutations of tile orientations that yield an image.
+/// Find valid permutations of tile orientations that yield an image.
 ///
 /// Parameters:
 /// - `partial_arrangement` - A valid arrangement prefix
 /// - `remaining_tiles` - All of the tiles not in `partial_arrangement`
 /// - `edge_length` - the number of _tiles_ on each edge of the final arrangement
-/// Returns: All the permutations of all the arrangements of tiles whose borders match
+/// Returns: some permutations of some arrangements of tiles whose borders match
 pub fn get_valid_arrangements<'t>(
     partial_arrangement: TileArrangement<'t>,
     remaining_tiles: Vec<&'t Tile>,
     edge_length: usize,
 ) -> Vec<TileArrangement<'t>> {
-    // TODO can I return an Iterator instead?
     if remaining_tiles.is_empty() {
         return vec![partial_arrangement];
     } else if partial_arrangement.arrangement.is_empty() {
@@ -574,16 +575,15 @@ pub fn get_valid_arrangements<'t>(
             let candidate = remaining_tiles[i]; // choose a candidate for the top left corner
             for orientation in candidate.permutations() {
                 // choose an orientation for the candidate tile
-                let partial = vec![orientation];
                 let partial = TileArrangement {
-                    arrangement: partial,
+                    arrangement: vec![orientation],
                     edge_length,
                 };
                 let (left, _) = remaining_tiles.split_at(i);
                 let (_, right) = remaining_tiles.split_at(i + 1);
                 let mut remaining = vec![];
-                remaining.extend(left.iter().cloned());
-                remaining.extend(right.iter().cloned());
+                remaining.extend_from_slice(left);
+                remaining.extend_from_slice(right);
 
                 // get all the possible arrangements with this orientation as the first tile
                 let valid_arrangements = get_valid_arrangements(partial, remaining, edge_length);
@@ -602,25 +602,15 @@ pub fn get_valid_arrangements<'t>(
         // choose a candidate for the next tile
         let candidate = remaining_tiles[i];
         // check if it fits in some orientation
-        let mut partial = vec![];
-        partial.extend_from_slice(&partial_arrangement.arrangement);
-        let partial = TileArrangement {
-            arrangement: partial,
-            edge_length,
-        };
-        if let Some(candidate) = partial.fits(candidate) {
-            let mut partial = partial_arrangement.arrangement.to_vec();
-            partial.push(candidate);
-            let partial = TileArrangement {
-                arrangement: partial,
-                edge_length,
-            };
+        if let Some(candidate) = partial_arrangement.fits(candidate) {
+            let mut partial = partial_arrangement.clone();
+            partial.arrangement.push(candidate);
 
             let (left, _) = remaining_tiles.split_at(i);
             let (_, right) = remaining_tiles.split_at(i + 1);
             let mut remaining = vec![];
-            remaining.extend(left.iter().cloned());
-            remaining.extend(right.iter().cloned());
+            remaining.extend_from_slice(left);
+            remaining.extend_from_slice(right);
 
             let valid_arrangements = get_valid_arrangements(partial, remaining, edge_length);
             prefixes.extend(valid_arrangements.iter().cloned());
@@ -629,43 +619,9 @@ pub fn get_valid_arrangements<'t>(
     prefixes
 }
 
-/// Combine a specific arrangement of tiles into one big tile
-///
-/// Parameters
-/// - `arrangement` - a square arrangement of tiles. It's length must equal `tiles_on_edge^2`
-/// - `tiles_on_edge` - the number of tiles on each border of the image
-/// - `edge_size` - the total number of pixels in the final image
-#[deprecated]
-pub fn combine(arrangement: &[Tile], tiles_on_edge: usize, edge_size: usize) -> Tile {
-    let mut grid: Vec<Vec<char>> = Vec::with_capacity(edge_size);
-    for (index, tile) in arrangement.iter().enumerate() {
-        let tile_row = index / tiles_on_edge;
-        let tile_column = index % tiles_on_edge;
-        let row_offset = tile.pixels.len() * tile_row;
-        let column_offset = tile.pixels.len() * tile_column;
-        for original_row in 0..tile.pixels.len() {
-            let row_id = original_row + row_offset;
-            for (original_column, pixel) in tile.pixels[original_row].iter().enumerate() {
-                let column_id = original_column + column_offset;
-                if column_id == 0 {
-                    grid.push(Vec::with_capacity(edge_size));
-                }
-                let row = &mut grid[row_id];
-                row.push(*pixel);
-            }
-        }
-    }
-    Tile {
-        id: 0,
-        pixels: grid,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::day20::{get_input, get_valid_arrangements, Tile, TileArrangement};
-
-    // TODO extract common code to pull arrangement once
 
     #[test]
     fn part1() {
