@@ -1,21 +1,34 @@
 // --- Day 21: Allergen Assessment ---
 // https://adventofcode.com/2020/day/21
 
-use std::collections::HashSet;
 use crate::get_lines;
+use std::collections::HashSet;
 
+/// A substance used in a food. It may contain 0 or 1 _Allergen_.
 pub type Ingredient = String;
+
+/// A substance that may be harmful to some individuals. It is found in exactly one _Ingredient_.
 pub type Allergen = String;
 
+/// A food item you are considering taking on your journey
 #[derive(Eq, PartialEq, Hash)]
 pub struct Food {
+    /// A comprehensive list of the ingredients used in this food, listed in a language you do not
+    /// understand.
     ingredients: Vec<Ingredient>,
+
+    /// Some or all of the allergens contained in this food, listed in a language you understand.
+    /// Some allergens may be omitted.
     allergens: Vec<Allergen>,
 }
 
-pub fn get_input() -> (HashSet<Ingredient>, HashSet<Allergen>, HashSet<Food>) {
-    let mut ingredients = HashSet::new();
-    let mut allergens = HashSet::new();
+/// Read the puzzle input
+///
+/// Returns:
+/// - the unique set of ingredients that can appear in any food
+/// - all of the potential food items
+pub fn get_input() -> (HashSet<Ingredient>, HashSet<Food>) {
+    let mut all_ingredients = HashSet::new();
     let mut foods = HashSet::new();
 
     for line in get_lines("day-21-input.txt") {
@@ -25,35 +38,37 @@ pub fn get_input() -> (HashSet<Ingredient>, HashSet<Allergen>, HashSet<Food>) {
         if split.next().is_some() {
             panic!("More components found");
         }
-        let mut food_ingredients = Vec::new();
-        for ingredient in ingredient_list.split(' ')
-            .map(|i| String::from(i)) {
-            food_ingredients.push(ingredient.clone());
-            ingredients.insert(ingredient);
+        let mut ingredients = Vec::new();
+        for ingredient in ingredient_list.split(' ').map(|i| String::from(i)) {
+            ingredients.push(ingredient.clone());
+            all_ingredients.insert(ingredient);
         }
-        let mut food_allergens = Vec::new();
-        for allergen in allergen_list.replace(')', "").split(", ").map(|a| String::from(a)) {
-            food_allergens.push(allergen.clone());
-            allergens.insert(allergen);
+        let mut allergens = Vec::new();
+        for allergen in allergen_list
+            .replace(')', "")
+            .split(", ")
+            .map(|a| String::from(a))
+        {
+            allergens.push(allergen);
         }
         let food = Food {
-            ingredients: food_ingredients,
-            allergens: food_allergens,
+            ingredients,
+            allergens,
         };
         foods.insert(food);
     }
 
-    (ingredients, allergens, foods)
+    (all_ingredients, foods)
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::day21::{get_input, Allergen, Ingredient};
     use std::collections::{BTreeMap, HashMap, HashSet};
-    use crate::day21::{Allergen, get_input, Ingredient};
 
     #[test]
     fn part1() {
-        let (ingredients, _, foods) = get_input();
+        let (ingredients, foods) = get_input();
         let mut allergen_to_food = HashMap::new();
         for food in &foods {
             for allergen in &food.allergens {
@@ -70,9 +85,11 @@ mod tests {
             let mut ingredients_that_may_contain_allergen = ingredients.clone();
 
             for food in foods_that_contain_allergen {
-                ingredients_that_may_contain_allergen.retain(|ingredient| food.ingredients.contains(ingredient));
+                ingredients_that_may_contain_allergen
+                    .retain(|ingredient| food.ingredients.contains(ingredient));
             }
-            inert_ingredients.retain(|ingredient| !ingredients_that_may_contain_allergen.contains(ingredient));
+            inert_ingredients
+                .retain(|ingredient| !ingredients_that_may_contain_allergen.contains(ingredient));
         }
 
         // "How many times do any of those ingredients appear?"
@@ -89,7 +106,7 @@ mod tests {
 
     #[test]
     fn part2() {
-        let (ingredients, _, foods) = get_input();
+        let (ingredients, foods) = get_input();
         let mut allergen_to_food = HashMap::new();
         for food in &foods {
             for allergen in &food.allergens {
@@ -105,7 +122,8 @@ mod tests {
         for (allergen, foods) in allergen_to_food {
             let mut ingredients_that_may_contain_allergen = ingredients.clone();
             for food in foods {
-                ingredients_that_may_contain_allergen.retain(|ingredient| food.ingredients.contains(ingredient));
+                ingredients_that_may_contain_allergen
+                    .retain(|ingredient| food.ingredients.contains(ingredient));
             }
             for dangerous_ingredient in ingredients_that_may_contain_allergen.clone() {
                 dangerous_ingredients.insert(dangerous_ingredient);
@@ -128,9 +146,11 @@ mod tests {
                 }
                 if let Some(allergen_to_remove) = mapped_allergen {
                     allergen_to_ingredient.remove(allergen_to_remove);
-                    allergen_to_ingredient.iter_mut().for_each(|(_, ingredients)| {
-                        ingredients.remove(&dangerous_ingredient);
-                    });
+                    allergen_to_ingredient
+                        .iter_mut()
+                        .for_each(|(_, ingredients)| {
+                            ingredients.remove(&dangerous_ingredient);
+                        });
                     mapped_ingredients.insert(dangerous_ingredient.clone());
                 }
             }
@@ -138,7 +158,8 @@ mod tests {
                 dangerous_ingredients.remove(&item);
             }
         }
-        let result = ingredient_to_allergen.iter()
+        let result = ingredient_to_allergen
+            .iter()
             .map(|(ingredient, allergen)| (*allergen, ingredient))
             .collect::<BTreeMap<&Allergen, &Ingredient>>()
             .iter()
