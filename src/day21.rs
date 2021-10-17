@@ -100,30 +100,28 @@ mod tests {
             }
         }
         // "determine which ingredients can't possibly contain any of the allergens in any food in your list"
-        let mut inert_ingredients = ingredients.clone(); // FIXME invert this to capture dangerous ingredients
+        let mut dangerous_ingredients = HashSet::new();
         let mut allergen_to_ingredient = HashMap::new();
         for (allergen, foods) in allergen_to_food {
             let mut ingredients_that_may_contain_allergen = ingredients.clone();
             for food in foods {
                 ingredients_that_may_contain_allergen.retain(|ingredient| food.ingredients.contains(ingredient));
             }
-            eprintln!("-- {} may be found in {:?}", allergen, ingredients_that_may_contain_allergen);
-            inert_ingredients.retain(|ingredient| !ingredients_that_may_contain_allergen.contains(ingredient));
+            for dangerous_ingredient in ingredients_that_may_contain_allergen.clone() {
+                dangerous_ingredients.insert(dangerous_ingredient);
+            }
             allergen_to_ingredient.insert(allergen, ingredients_that_may_contain_allergen);
         }
 
         let mut ingredient_to_allergen = HashMap::new();
-        let mut dangerous_ingredients = ingredients.difference(&inert_ingredients)
-            .collect::<HashSet<&Ingredient>>();
         while !dangerous_ingredients.is_empty() {
             let mut mapped_ingredients = HashSet::new();
             for dangerous_ingredient in dangerous_ingredients.clone() {
                 let mut mapped_allergen = None;
                 for (allergen, ingredients) in allergen_to_ingredient.clone() {
-                    if ingredients.len() == 1 && ingredients.contains(dangerous_ingredient) {
+                    if ingredients.len() == 1 && ingredients.contains(&dangerous_ingredient) {
                         // this is the only ingredient known to contain this allergen
-                        ingredient_to_allergen.insert(dangerous_ingredient, allergen);
-                        eprintln!("-- mapping {} to {}", dangerous_ingredient, allergen);
+                        ingredient_to_allergen.insert(dangerous_ingredient.clone(), allergen);
                         mapped_allergen = Some(allergen);
                         break;
                     }
@@ -131,19 +129,17 @@ mod tests {
                 if let Some(allergen_to_remove) = mapped_allergen {
                     allergen_to_ingredient.remove(allergen_to_remove);
                     allergen_to_ingredient.iter_mut().for_each(|(_, ingredients)| {
-                        ingredients.remove(dangerous_ingredient);
+                        ingredients.remove(&dangerous_ingredient);
                     });
-                    mapped_ingredients.insert(dangerous_ingredient);
-                } else {
-                    eprintln!("-- not yet able to map {}", dangerous_ingredient);
+                    mapped_ingredients.insert(dangerous_ingredient.clone());
                 }
             }
             for item in mapped_ingredients {
-                dangerous_ingredients.remove(item);
+                dangerous_ingredients.remove(&item);
             }
         }
         let result = ingredient_to_allergen.iter()
-            .map(|(ingredient, allergen)| (*allergen, *ingredient))
+            .map(|(ingredient, allergen)| (*allergen, ingredient))
             .collect::<BTreeMap<&Allergen, &Ingredient>>()
             .iter()
             .map(|(_, ingredient)| String::from(*ingredient))
