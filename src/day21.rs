@@ -89,25 +89,24 @@ pub fn get_input() -> (Vec<Ingredient>, Vec<Allergen>, HashSet<Food>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::day21::{get_input, Allergen, Food, Ingredient};
+    use crate::day21::{get_input, Food, Ingredient};
     use std::collections::{BTreeMap, HashMap, HashSet};
 
     #[test]
     fn part1() {
         let (ingredients, allergens, foods) = get_input();
-        let mut allergen_to_food = HashMap::with_capacity(allergens.len());
+        let mut allergen_to_food = (0..allergens.len())
+            .map(|_| HashSet::new())
+            .collect::<Vec<HashSet<&Food>>>();
         for food in &foods {
             for allergen_id in &food.allergen_ids {
-                let set = allergen_to_food
-                    .entry(allergen_id)
-                    .or_insert_with(HashSet::new);
-                set.insert(food);
+                allergen_to_food[*allergen_id].insert(food);
             }
         }
         // "determine which ingredients can't possibly contain any of the allergens in any food in your list"
         let mut inert_ingredient_ids = (0..ingredients.len()).collect::<Vec<usize>>();
 
-        for foods_that_contain_allergen in allergen_to_food.values() {
+        for foods_that_contain_allergen in allergen_to_food {
             let mut ingredients_that_may_contain_allergen =
                 (0..ingredients.len()).collect::<Vec<usize>>();
 
@@ -189,9 +188,9 @@ mod tests {
         let result = ingredient_to_allergen
             .iter()
             .map(|(ingredient_id, allergen_id)| {
-                (&allergens[*allergen_id], &ingredients[*ingredient_id])
+                (*allergen_id, &ingredients[*ingredient_id])
             })
-            .collect::<BTreeMap<&Allergen, &Ingredient>>()
+            .collect::<BTreeMap<usize, &Ingredient>>()
             .iter()
             .map(|(_, ingredient)| String::from(*ingredient))
             .collect::<Vec<Ingredient>>()
