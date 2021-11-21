@@ -187,9 +187,7 @@ mod tests {
         }
         let result = ingredient_to_allergen
             .iter()
-            .map(|(ingredient_id, allergen_id)| {
-                (*allergen_id, &ingredients[*ingredient_id])
-            })
+            .map(|(ingredient_id, allergen_id)| (*allergen_id, &ingredients[*ingredient_id]))
             .collect::<BTreeMap<usize, &Ingredient>>()
             .iter()
             .map(|(_, ingredient)| String::from(*ingredient))
