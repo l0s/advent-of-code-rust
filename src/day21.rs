@@ -40,16 +40,12 @@ pub fn get_input() -> (Vec<Ingredient>, Vec<Allergen>, HashSet<Food>) {
             panic!("More components found");
         }
         let mut ingredients = Vec::new();
-        for ingredient in ingredient_list.split(' ').map(|i| String::from(i)) {
+        for ingredient in ingredient_list.split(' ').map(String::from) {
             ingredients.push(ingredient.clone());
             all_ingredients.insert(ingredient);
         }
         let mut allergens = Vec::new();
-        for allergen in allergen_list
-            .replace(')', "")
-            .split(", ")
-            .map(|a| String::from(a))
-        {
+        for allergen in allergen_list.replace(')', "").split(", ").map(String::from) {
             allergens.push(allergen.clone());
             all_allergens.insert(allergen.clone());
         }
