@@ -26,7 +26,7 @@ jobs:
           cargo-${{ runner.os }}-
           cargo-
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --locked --verbose
     - name: Lint
       run: cargo clippy --all-targets --all-features -- -D warnings
     - name: Run tests
