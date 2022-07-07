@@ -113,15 +113,13 @@ impl FromStr for Rule {
         if s.starts_with('"') {
             let c = s
                 .strip_prefix('"')
-                .map(|s| s.strip_suffix('"'))
-                .flatten()
-                .map(|s| -> Option<char> {
+                .and_then(|s| s.strip_suffix('"'))
+                .and_then(|s| -> Option<char> {
                     if s.len() != 1 {
                         return None;
                     }
                     s.chars().next()
                 })
-                .flatten()
                 .expect(&*format!("Error parsing character: {}", s));
             Ok(MatchSingleCharacter(c))
         } else if s.contains(" | ") {

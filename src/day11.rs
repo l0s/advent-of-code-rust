@@ -38,8 +38,7 @@ pub fn read_seat_layout() -> Vec<Vec<Position>> {
     get_lines("day-11-input.txt")
         .map(|line| -> Vec<Position> {
             line.graphemes(true)
-                .map(Position::from_str)
-                .flatten()
+                .flat_map(Position::from_str)
                 .collect()
         })
         .collect()

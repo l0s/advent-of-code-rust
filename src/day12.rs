@@ -117,7 +117,7 @@ pub struct Point {
 impl Point {
     /// The sum of the absolute longitudinal and latitudinal distances from the origin
     pub fn get_manhattan_distance(&self) -> u16 {
-        self.x.abs() as u16 + self.y.abs() as u16
+        self.x.unsigned_abs() + self.y.unsigned_abs()
     }
 }
 

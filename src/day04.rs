@@ -13,9 +13,7 @@ pub fn get_blocks() -> impl Iterator<Item = HashMap<String, String>> {
             .map(|string| string.trim())
             .filter(|block_entry| !block_entry.is_empty())
             .map(|block_entry| -> (String, String) {
-                let mut components = block_entry.splitn(2, ':');
-                let key = components.next().unwrap();
-                let value = components.next().unwrap();
+                let (key, value) = block_entry.split_once(':').unwrap();
                 (key.trim().to_owned(), value.trim().to_owned())
             })
             .collect()

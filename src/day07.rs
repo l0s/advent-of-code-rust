@@ -10,8 +10,7 @@ use crate::get_lines;
 
 pub fn get_input() -> HashMap<String, Rule> {
     get_lines("day-7-input.txt")
-        .map(|sentence| sentence.parse::<Rule>())
-        .flatten() // FIXME return Err if _any_ sentence cannot be parsed
+        .flat_map(|sentence| sentence.parse::<Rule>())
         .map(|rule| (rule.container_colour.to_owned(), rule))
         .collect()
 }
@@ -54,7 +53,7 @@ impl FromStr for Rule {
         }
         let contained_counts = contained
             .split(", ")
-            .map(|phrase| -> Result<(String, u32), Self::Err> {
+            .flat_map(|phrase| -> Result<(String, u32), Self::Err> {
                 let phrase = BAG_SUFFIX.replace(phrase, "");
                 let mut phrase_components = phrase.splitn(2, ' ');
 
@@ -72,7 +71,6 @@ impl FromStr for Rule {
 
                 Ok((colour.unwrap().trim().to_owned(), count.unwrap()))
             })
-            .flatten() // FIXME return Err if _any_ phrase cannot be parsed
             .collect::<HashMap<String, u32>>();
         Ok(Rule {
             container_colour,

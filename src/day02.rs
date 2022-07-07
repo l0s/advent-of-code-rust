@@ -31,7 +31,7 @@ impl Entry for SledEntry {
     fn build(line: String) -> Self {
         let mut components = line.split_whitespace();
         let range_string = components.next().unwrap();
-        let c = components.next().unwrap().replace(":", "");
+        let c = components.next().unwrap().replace(':', "");
         let password = components.next().unwrap().to_owned();
 
         let mut range_components = range_string
@@ -68,7 +68,7 @@ impl Entry for TobogganEntry {
     fn build(line: String) -> Self {
         let mut components = line.split_whitespace();
         let position_str = components.next().unwrap();
-        let c = components.next().unwrap().replace(":", "");
+        let c = components.next().unwrap().replace(':', "");
         let password = components.next().unwrap().to_owned();
         let mut position_components = position_str
             .split('-')

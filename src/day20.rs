@@ -372,7 +372,7 @@ impl<'t> OrientedTile<'t> {
     /// - `horizontal_offset` - how far "right" from the origin that the image starts
     fn highlight_seamonster(
         &'t self,
-        pixels: &mut Vec<Vec<char>>,
+        pixels: &mut [Vec<char>],
         vertical_offset: usize,
         horizontal_offset: usize,
     ) {
