@@ -8,7 +8,7 @@ use crate::day08::ParseError::{
 };
 use std::num::ParseIntError;
 
-#[derive(PartialEq)]
+#[derive(Eq, PartialEq)]
 pub enum Operation {
     /// Increase or decrease the accumulator by the value in the argument.
     /// Move to the instruction directly below.
