@@ -120,7 +120,7 @@ impl FromStr for Rule {
                     }
                     s.chars().next()
                 })
-                .expect(&*format!("Error parsing character: {}", s));
+                .unwrap_or_else(|| panic!("Error parsing character: {}", s));
             Ok(MatchSingleCharacter(c))
         } else if s.contains(" | ") {
             let potential_rule_sets = s
@@ -131,7 +131,7 @@ impl FromStr for Rule {
                         .split(' ')
                         .map(|c| {
                             c.parse::<usize>()
-                                .expect(&*format!("Invalid rule ID: {}", c))
+                                .unwrap_or_else(|_| panic!("Invalid rule ID: {}", c))
                         })
                         .collect::<Vec<usize>>()
                 })
@@ -154,7 +154,7 @@ fn parse_rule(string: &str) -> (usize, Rule) {
         let id = id_string
             .trim()
             .parse::<usize>()
-            .expect(&*format!("Unparseable id: {}", id_string));
+            .unwrap_or_else(|_| panic!("Unparseable id: {}", id_string));
         if let Some(value_string) = sections.next() {
             let value_string = value_string.trim();
             if let Ok(rule) = Rule::from_str(value_string) {
@@ -183,7 +183,7 @@ pub fn get_input() -> (HashMap<usize, Rule>, Vec<String>) {
             continue;
         }
         if section == 0 {
-            let (id, rule) = parse_rule(&*line);
+            let (id, rule) = parse_rule(&line);
             rules.insert(id, rule);
         } else if section == 1 {
             messages.push(line);

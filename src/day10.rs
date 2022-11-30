@@ -49,10 +49,10 @@ pub fn count_adapter_arrangements(
     }
 
     if adapters.is_empty() {
-        return if from + 3 == to { 1 } else { 0 };
+        return u64::from(from + 3 == to);
     } else if adapters.len() == 1 {
         let last = adapters[0];
-        return if last == to - 3 { 1 } else { 0 };
+        return u64::from(last == to - 3);
     }
 
     let mut retval = 0u64;
