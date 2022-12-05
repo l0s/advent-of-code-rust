@@ -1,28 +1,18 @@
-use crate::get_lines;
+/// --- Day 1: Calorie Counting ---
+/// https://adventofcode.com/2022/day/1
+
+use crate::get_block_strings;
 use std::cmp::Ordering;
 
-pub fn get_elves(max: usize) -> Vec<Elf> {
-    let mut calories_carried = 0usize;
-    let mut result = vec![];
-    for line in get_lines("day-01.txt") {
-        if line.is_empty() {
-            let elf = Elf { calories_carried };
-            calories_carried = 0;
+type CalorieCount = u32;
 
-            let index = match result.binary_search(&elf) {
-                Ok(index) => index,
-                Err(index) => index,
-            };
-            result.insert(index, elf);
-            if result.len() > max {
-                result.remove(result.len() - 1);
-            }
-        } else {
-            calories_carried += line.parse::<usize>().unwrap();
-        }
-    }
-    if calories_carried > 0 {
-        let elf = Elf { calories_carried };
+pub fn get_elves(max: usize) -> Vec<Elf> {
+    let mut result = vec![];
+    for elf in get_block_strings("day-01.txt")
+        .map(|block| block.split('\n')
+            .map(|line| line.parse::<CalorieCount>().expect("Invalid calorie count"))
+            .sum())
+        .map(|calories_carried| Elf { calories_carried }) {
         let index = match result.binary_search(&elf) {
             Ok(index) => index,
             Err(index) => index,
@@ -37,7 +27,7 @@ pub fn get_elves(max: usize) -> Vec<Elf> {
 
 #[derive(Debug)]
 pub struct Elf {
-    calories_carried: usize,
+    calories_carried: CalorieCount,
 }
 
 impl Eq for Elf {}
@@ -62,19 +52,20 @@ impl Ord for Elf {
 
 #[cfg(test)]
 mod tests {
-    use crate::day01::get_elves;
+    use crate::day01::{CalorieCount, get_elves};
 
     #[test]
     fn part1() {
         let elves = get_elves(1);
+        let result: CalorieCount = elves.iter().map(|elf| elf.calories_carried).sum();
 
-        println!("Part 1: {}", elves[0].calories_carried);
+        println!("Part 1: {}", result);
     }
 
     #[test]
     fn part2() {
         let elves = get_elves(3);
-        let result: usize = elves.iter().map(|elf| elf.calories_carried).sum();
+        let result: CalorieCount = elves.iter().map(|elf| elf.calories_carried).sum();
 
         println!("Part 2: {}", result);
     }
