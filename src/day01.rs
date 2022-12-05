@@ -1,6 +1,5 @@
 /// --- Day 1: Calorie Counting ---
 /// https://adventofcode.com/2022/day/1
-
 use crate::get_block_strings;
 use std::cmp::Ordering;
 
@@ -9,10 +8,14 @@ type CalorieCount = u32;
 pub fn get_elves(max: usize) -> Vec<Elf> {
     let mut result = vec![];
     for elf in get_block_strings("day-01.txt")
-        .map(|block| block.split('\n')
-            .map(|line| line.parse::<CalorieCount>().expect("Invalid calorie count"))
-            .sum())
-        .map(|calories_carried| Elf { calories_carried }) {
+        .map(|block| {
+            block
+                .split('\n')
+                .map(|line| line.parse::<CalorieCount>().expect("Invalid calorie count"))
+                .sum()
+        })
+        .map(|calories_carried| Elf { calories_carried })
+    {
         let index = match result.binary_search(&elf) {
             Ok(index) => index,
             Err(index) => index,
@@ -52,7 +55,7 @@ impl Ord for Elf {
 
 #[cfg(test)]
 mod tests {
-    use crate::day01::{CalorieCount, get_elves};
+    use crate::day01::{get_elves, CalorieCount};
 
     #[test]
     fn part1() {
