@@ -122,7 +122,7 @@ impl<R: BufRead> Iterator for Blocks<R> {
             match &self.try_read(previous_byte) {
                 EndOfInput => {
                     if !bytes.is_empty() {
-                        result = Some(String::from_utf8_lossy(&bytes).trim().to_string());
+                        result = Some(String::from_utf8_lossy(&bytes).to_string());
                     }
                     complete = true;
                 }
@@ -132,7 +132,7 @@ impl<R: BufRead> Iterator for Blocks<R> {
                 }
                 EndOfBlock(partial) => {
                     bytes = [&bytes, *partial].concat();
-                    result = Some(String::from_utf8_lossy(&bytes).trim().to_string());
+                    result = Some(String::from_utf8_lossy(&bytes).to_string());
                     bytes_read = partial.len();
                     complete = true;
                 }

@@ -12,6 +12,8 @@ pub fn get_part1_input() -> (Vec<VecDeque<char>>, Vec<CrateMover9000Instruction>
     let instructions = iterator.next().expect("Instructions missing");
     let instructions = instructions
         .split('\n')
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
         .map(|line| line.parse::<CrateMover9000Instruction>())
         .map(Result::unwrap)
         .collect::<Vec<CrateMover9000Instruction>>();
@@ -25,6 +27,8 @@ pub fn get_part2_input() -> (Vec<VecDeque<char>>, Vec<CrateMover9001Instruction>
     let instructions = iterator.next().expect("Instructions missing");
     let instructions = instructions
         .split('\n')
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
         .map(|line| line.parse::<CrateMover9001Instruction>())
         .map(Result::unwrap)
         .collect::<Vec<CrateMover9001Instruction>>();

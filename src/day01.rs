@@ -11,6 +11,8 @@ pub fn get_elves(max: usize) -> Vec<Elf> {
         .map(|block| {
             block
                 .split('\n')
+                .map(str::trim)
+                .filter(|line| !line.is_empty())
                 .map(|line| line.parse::<CalorieCount>().expect("Invalid calorie count"))
                 .sum()
         })
