@@ -1,4 +1,5 @@
 extern crate core;
+extern crate lazy_static;
 
 pub mod day01;
 pub mod day02;
@@ -10,6 +11,7 @@ pub mod day07;
 pub mod day08;
 pub mod day09;
 pub mod day10;
+pub mod day11;
 
 use crate::BufReadResult::{BufferingError, EndOfBlock, EndOfInput, PartialBlock};
 use serde_derive::Deserialize;

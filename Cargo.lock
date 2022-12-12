@@ -7,6 +7,7 @@ name = "advent-of-code"
 version = "0.2022.0"
 dependencies = [
  "hashers",
+ "lazy_static",
  "rayon",
  "regex",
  "serde",
