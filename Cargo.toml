@@ -12,7 +12,7 @@ lazy_static = "1.4.0"
 rayon = "1.6.0"
 regex = "1"
 serde = "1.0.150"
-serde_derive = "1.0.148"
+serde_derive = "1.0.150"
 toml = "0.5.9"
 unicode-segmentation = "1.10.0"
 [dependencies.uuid]
